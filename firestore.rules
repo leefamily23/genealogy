@@ -4,17 +4,23 @@ service cloud.firestore {
 
     // Helper: get the caller's role from the users collection
     function getRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
+      return userDoc.data.role;
+    }
+
+    // Helper: check if user document exists
+    function userExists() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
     // Helper: caller is signed in AND has role editor or admin
     function isEditorOrAdmin() {
-      return request.auth != null && getRole() in ['editor', 'admin'];
+      return request.auth != null && userExists() && getRole() in ['editor', 'admin'];
     }
 
     // Helper: caller is signed in AND has role admin
     function isAdmin() {
-      return request.auth != null && getRole() == 'admin';
+      return request.auth != null && userExists() && getRole() == 'admin';
     }
 
     // family: public read, editor/admin write
@@ -23,22 +29,31 @@ service cloud.firestore {
       allow write: if isEditorOrAdmin();
     }
 
-    // users: more nuanced rules to allow activation while maintaining security
+    // users: complex rules to allow activation while maintaining security
     match /users/{userId} {
       // Admins can read/write all users
       allow read, write: if isAdmin();
       
-      // Authenticated users can read their own record or pending invites by email
+      // Authenticated users can read:
+      // - Their own record (by UID)
+      // - Pending invites with their email (for activation)
       allow read: if request.auth != null && (
         userId == request.auth.uid || 
-        userId == request.auth.token.email
+        (resource.data.email == request.auth.token.email && resource.data.status == 'pending')
       );
       
-      // Authenticated users can create/update their own record (for activation)
-      allow create, update: if request.auth != null && userId == request.auth.uid;
+      // Authenticated users can create their own record (for activation)
+      allow create: if request.auth != null && 
+        userId == request.auth.uid &&
+        request.resource.data.uid == request.auth.uid;
+      
+      // Authenticated users can update their own record
+      allow update: if request.auth != null && userId == request.auth.uid;
       
       // Authenticated users can delete pending invites with their email (for activation cleanup)
-      allow delete: if request.auth != null && userId == request.auth.token.email;
+      allow delete: if request.auth != null && 
+        resource.data.email == request.auth.token.email && 
+        resource.data.status == 'pending';
     }
 
     // editHistory: signed-in read, editor/admin write
