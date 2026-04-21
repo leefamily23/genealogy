@@ -25,6 +25,9 @@ export async function signIn() {
     const credential = await signInWithPopup(auth, provider);
     const user = credential.user;
 
+    // Small delay to ensure Firestore is ready
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     // Check for existing user record by uid
     const userDoc = await getDoc(doc(db, 'users', user.uid));
 
@@ -42,7 +45,6 @@ export async function signIn() {
     const pendingSnap = await getDocs(pendingQuery);
 
     if (!pendingSnap.empty) {
-      // Promote pending invite to active record keyed by uid
       const pendingDoc = pendingSnap.docs[0];
       const pendingData = pendingDoc.data();
       const { setDoc, deleteDoc } = await import(
@@ -97,8 +99,15 @@ export function onAuthStateChange(callback) {
     }
 
     try {
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      if (userDoc.exists()) {
+      // Retry up to 3 times with delay (Firestore may be slow on first load)
+      let userDoc = null;
+      for (let i = 0; i < 3; i++) {
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        if (snap.exists()) { userDoc = snap; break; }
+        await new Promise(r => setTimeout(r, 1000));
+      }
+
+      if (userDoc) {
         _currentRole = userDoc.data().role;
         _currentUser = user;
         callback(user, _currentRole);
