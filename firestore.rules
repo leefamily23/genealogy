@@ -23,9 +23,22 @@ service cloud.firestore {
       allow write: if isEditorOrAdmin();
     }
 
-    // users: admin read/write only
+    // users: more nuanced rules to allow activation while maintaining security
     match /users/{userId} {
+      // Admins can read/write all users
       allow read, write: if isAdmin();
+      
+      // Authenticated users can read their own record or pending invites by email
+      allow read: if request.auth != null && (
+        userId == request.auth.uid || 
+        userId == request.auth.token.email
+      );
+      
+      // Authenticated users can create/update their own record (for activation)
+      allow create, update: if request.auth != null && userId == request.auth.uid;
+      
+      // Authenticated users can delete pending invites with their email (for activation cleanup)
+      allow delete: if request.auth != null && userId == request.auth.token.email;
     }
 
     // editHistory: signed-in read, editor/admin write
@@ -35,4 +48,3 @@ service cloud.firestore {
     }
   }
 }
-
