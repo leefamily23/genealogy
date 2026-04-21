@@ -13,9 +13,6 @@ let _role    = null;
 // ── Boot ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
 
-  // Handle redirect result (for iOS sign-in)
-  await handleRedirectResult();
-
   // Init one-time UI wiring
   initHistoryToggle();
   initUserManagement();
