@@ -13,9 +13,6 @@ let _role    = null;
 // ── Boot ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
 
-  // Handle redirect result (for iOS sign-in)
-  await handleRedirectResult();
-
   // Init one-time UI wiring
   initHistoryToggle();
   initUserManagement();
@@ -51,21 +48,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Auth state changes
-  let isFirstLoad = true;
   onAuthStateChange(async (user, role) => {
-    console.log('Auth state changed:', user?.email, role);
     _role = role;
     updateAuthUI(user, role);
     
-    // Only reload tree on first load or when explicitly needed
-    // This prevents infinite loops during auth state changes
-    if (isFirstLoad) {
-      await reloadTree();
-      isFirstLoad = false;
-    } else {
-      // Just re-render with existing data
-      renderTree(_members, _role);
-    }
+    // Reload tree data when auth state changes to ensure we have fresh data
+    await reloadTree();
 
     if (user && role) {
       startHistoryPanel();

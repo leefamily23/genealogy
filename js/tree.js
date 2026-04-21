@@ -15,8 +15,6 @@ let svg, group, zoom, nodes;
 export function renderTree(members, role) {
   _currentRole = role;
 
-  console.log(`renderTree called with ${members?.length || 0} members, role: ${role}`);
-
   const container = document.getElementById('tree-container');
   const treeGroup = document.getElementById('tree-group');
 
@@ -24,15 +22,12 @@ export function renderTree(members, role) {
   treeGroup.innerHTML = '';
 
   if (!members || members.length === 0) {
-    console.error('No members data to render');
     container.innerHTML =
       '<p style="padding:40px;color:#c0392b;font-size:1rem">' +
       'Unable to load family data. Please check your connection and try again.</p>';
     return;
   }
 
-  console.log('D3 available:', typeof d3 !== 'undefined');
-  
   svg   = d3.select('#tree-svg');
   group = d3.select('#tree-group');
 
@@ -43,9 +38,7 @@ export function renderTree(members, role) {
       .id(d => d.id)
       .parentId(d => d.parentId || null);
     root = stratify(members);
-    console.log('Tree hierarchy built successfully');
   } catch (err) {
-    console.error('Tree stratify error:', err);
     container.innerHTML =
       `<p style="padding:40px;color:#c0392b">Tree error: ${err.message}</p>`;
     return;
