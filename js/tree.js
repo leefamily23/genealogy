@@ -31,40 +31,15 @@ export function renderTree(members, role) {
   svg   = d3.select('#tree-svg');
   group = d3.select('#tree-group');
 
-  // ── Build hierarchy from flat array using d3.stratify ─────────────────────
-  let root;
+  // ── Build family tree with proper marriage and child relationships ─────────
   try {
-    // Filter out spouses from the main tree hierarchy
-    // Spouses will be rendered separately next to their partners
-    const treeMembers = members.filter(member => {
-      // Include members who have a parentId (children) or who are the root
-      // Exclude members who are only connected as spouses (no parentId and not the original root)
-      if (member.parentId) return true;
-      
-      // Check if this member has children - if so, they're part of the main tree
-      const hasChildren = members.some(m => m.parentId === member.id);
-      if (hasChildren) return true;
-      
-      // Check if this member is referenced as a spouse - if so, exclude from main tree
-      const isSpouseOnly = members.some(m => m.spouse === member.id);
-      return !isSpouseOnly;
-    });
-
-    const stratify = d3.stratify()
-      .id(d => d.id)
-      .parentId(d => d.parentId || null);
-    root = stratify(treeMembers);
+    const familyLayout = buildFamilyLayout(members);
+    renderFamilyTree(familyLayout);
   } catch (err) {
     container.innerHTML =
       `<p style="padding:40px;color:#c0392b">Tree error: ${err.message}</p>`;
     return;
   }
-
-  // ── Tree layout ────────────────────────────────────────────────────────────
-  const treeLayout = d3.tree()
-    .nodeSize([NODE_SPACING.x, NODE_SPACING.y])
-    .separation((a, b) => a.parent === b.parent ? 1.2 : 1.6);
-  treeLayout(root);
 
   // ── Zoom & pan ─────────────────────────────────────────────────────────────
   zoom = d3.zoom()
@@ -76,184 +51,8 @@ export function renderTree(members, role) {
   const h = container.clientHeight;
   svg.call(zoom.transform, d3.zoomIdentity.translate(w / 2, 80).scale(0.8));
 
-  // ── Links ──────────────────────────────────────────────────────────────────
-  group.selectAll('.link')
-    .data(root.links())
-    .join('path')
-    .attr('class', 'link')
-    .attr('d', d3.linkVertical().x(d => d.x).y(d => d.y));
-
-  // ── Nodes ──────────────────────────────────────────────────────────────────
-  nodes = group.selectAll('.node')
-    .data(root.descendants())
-    .join('g')
-    .attr('class', d => `node ${d.data.gender || 'unknown'}`)
-    .attr('transform', d => `translate(${d.x},${d.y})`)
-    .on('click', (event, d) => {
-      // Dispatch custom event — decouples detail panel from tree
-      document.dispatchEvent(
-        new CustomEvent('member-selected', { detail: d.data })
-      );
-    });
-
-  nodes.append('circle').attr('r', NODE_RADIUS);
-
-  nodes.append('text')
-    .attr('class', 'name-label')
-    .attr('dy', NODE_RADIUS + 14)
-    .text(d => {
-      // Show Chinese name (now in 'name' field) or nickname (now in 'chinese' field)
-      if (showChinese) {
-        return d.data.name; // Chinese name
-      } else {
-        return d.data.chinese || d.data.name; // Nickname or Chinese name
-      }
-    });
-
-  nodes.append('text')
-    .attr('class', 'year-label')
-    .attr('dy', NODE_RADIUS + 26)
-    .text(d => {
-      const b  = d.data.birth || '?';
-      const dd = d.data.death || '';
-      return dd ? `${b}–${dd}` : b;
-    });
-
-  // ── Spouse nodes and marriage links ────────────────────────────────────────
-  // Find all spouses and render them next to their partners
-  const spouseData = [];
-  const marriageLinks = [];
-  
-  root.descendants().forEach(node => {
-    const member = node.data;
-    if (member.spouse) {
-      // Find the spouse member data
-      const spouseMember = members.find(m => m.id === member.spouse);
-      if (spouseMember) {
-        // Position spouse to the right of the main member
-        const spouseNode = {
-          data: spouseMember,
-          x: node.x + 60, // Offset to the right
-          y: node.y,
-          isSpouse: true
-        };
-        spouseData.push(spouseNode);
-        
-        // Create marriage link
-        marriageLinks.push({
-          source: { x: node.x, y: node.y },
-          target: { x: spouseNode.x, y: spouseNode.y }
-        });
-      }
-    }
-  });
-
-  // Render marriage links
-  group.selectAll('.marriage-link')
-    .data(marriageLinks)
-    .join('line')
-    .attr('class', 'marriage-link')
-    .attr('x1', d => d.source.x)
-    .attr('y1', d => d.source.y)
-    .attr('x2', d => d.target.x)
-    .attr('y2', d => d.target.y)
-    .attr('stroke', '#e74c3c')
-    .attr('stroke-width', 2)
-    .attr('stroke-dasharray', '5,5');
-
-  // Render spouse nodes
-  const spouseNodes = group.selectAll('.spouse-node')
-    .data(spouseData)
-    .join('g')
-    .attr('class', d => `spouse-node node ${d.data.gender || 'unknown'}`)
-    .attr('transform', d => `translate(${d.x},${d.y})`)
-    .on('click', (event, d) => {
-      document.dispatchEvent(
-        new CustomEvent('member-selected', { detail: d.data })
-      );
-    });
-
-  spouseNodes.append('circle').attr('r', NODE_RADIUS);
-
-  spouseNodes.append('text')
-    .attr('class', 'name-label')
-    .attr('dy', NODE_RADIUS + 14)
-    .text(d => {
-      if (showChinese) {
-        return d.data.name;
-      } else {
-        return d.data.chinese || d.data.name;
-      }
-    });
-
-  spouseNodes.append('text')
-    .attr('class', 'year-label')
-    .attr('dy', NODE_RADIUS + 26)
-    .text(d => {
-      const b  = d.data.birth || '?';
-      const dd = d.data.death || '';
-      return dd ? `${b}–${dd}` : b;
-    });
-
-  // Update the global nodes variable to include spouse nodes for language toggle
-  nodes = group.selectAll('.node');
-
-  // ── Controls ───────────────────────────────────────────────────────────────
-  const btnZoomIn  = document.getElementById('btn-zoom-in');
-  const btnZoomOut = document.getElementById('btn-zoom-out');
-  const btnReset   = document.getElementById('btn-reset');
-  const btnLang    = document.getElementById('btn-toggle-lang');
-
-  if (btnZoomIn)  btnZoomIn.onclick  = () => svg.transition().call(zoom.scaleBy, 1.3);
-  if (btnZoomOut) btnZoomOut.onclick = () => svg.transition().call(zoom.scaleBy, 0.77);
-  if (btnReset)   btnReset.onclick   = () =>
-    svg.transition().call(zoom.transform, d3.zoomIdentity.translate(w / 2, 80).scale(0.8));
-
-  if (btnLang) btnLang.onclick = () => {
-    showChinese = !showChinese;
-    if (nodes) {
-      nodes.selectAll('text.name-label')
-        .text(d => {
-          if (showChinese) {
-            return d.data.name; // Chinese name
-          } else {
-            return d.data.chinese || d.data.name; // Nickname or Chinese name
-          }
-        });
-    }
-  };
-
-  // ── Search ─────────────────────────────────────────────────────────────────
-  const searchBtn   = document.getElementById('search-btn');
-  const searchInput = document.getElementById('search-input');
-
-  function doSearch() {
-    const q = (searchInput?.value || '').trim().toLowerCase();
-    if (nodes) nodes.classed('highlighted', false);
-    if (!q || !nodes) return;
-
-    const matched = nodes.filter(d =>
-      d.data.name.toLowerCase().includes(q) ||
-      (d.data.chinese && d.data.chinese.includes(q))
-    );
-    matched.classed('highlighted', true);
-
-    if (!matched.empty()) {
-      const d     = matched.datum();
-      const scale = d3.zoomTransform(svg.node()).k;
-      svg.transition().duration(600).call(
-        zoom.transform,
-        d3.zoomIdentity
-          .translate(w / 2 - d.x * scale, h / 2 - d.y * scale)
-          .scale(scale)
-      );
-    }
-  }
-
-  if (searchBtn)   searchBtn.onclick = doSearch;
-  if (searchInput) searchInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter') doSearch();
-  });
+  // ── Controls and search setup ──────────────────────────────────────────────
+  setupControls(container);
 }
 
 /**
@@ -299,4 +98,271 @@ export function renderDetailPanel(member, role, allMembers = []) {
       ${!hasChildren ? `<button class="btn-action btn-delete" data-id="${member.id}" data-name="${member.name}">🗑️ Delete</button>` : ''}
     </div>` : ''}
   `;
+}
+
+/**
+ * Build a proper family tree layout with marriages and children from couples
+ * @param {object[]} members - Array of family members
+ * @returns {object} Layout data for rendering
+ */
+function buildFamilyLayout(members) {
+  const layout = {
+    couples: [],
+    individuals: [],
+    children: [],
+    links: []
+  };
+
+  // Find all married couples
+  const processedSpouses = new Set();
+  
+  members.forEach(member => {
+    if (member.spouse && !processedSpouses.has(member.id)) {
+      const spouse = members.find(m => m.id === member.spouse);
+      if (spouse) {
+        // Create couple unit
+        const couple = {
+          id: `couple-${member.id}-${spouse.id}`,
+          member1: member,
+          member2: spouse,
+          children: members.filter(m => m.parentId === member.id || m.parentId === spouse.id)
+        };
+        layout.couples.push(couple);
+        processedSpouses.add(member.id);
+        processedSpouses.add(spouse.id);
+      }
+    }
+  });
+
+  // Find individuals without spouses
+  members.forEach(member => {
+    if (!member.spouse && !processedSpouses.has(member.id)) {
+      layout.individuals.push({
+        ...member,
+        children: members.filter(m => m.parentId === member.id)
+      });
+    }
+  });
+
+  return layout;
+}
+
+/**
+ * Render the family tree with proper couple and child relationships
+ * @param {object} layout - Family layout data
+ */
+function renderFamilyTree(layout) {
+  const allNodes = [];
+  const allLinks = [];
+  
+  let currentY = 0;
+  const levelHeight = NODE_SPACING.y;
+  
+  // Position couples and individuals at root level
+  let currentX = 0;
+  
+  // Render couples
+  layout.couples.forEach(couple => {
+    // Position the couple side by side
+    const member1X = currentX;
+    const member2X = currentX + NODE_SPACING.x * 0.6;
+    const coupleY = currentY;
+    
+    // Add couple members
+    allNodes.push({
+      data: couple.member1,
+      x: member1X,
+      y: coupleY,
+      type: 'person'
+    });
+    
+    allNodes.push({
+      data: couple.member2,
+      x: member2X,
+      y: coupleY,
+      type: 'person'
+    });
+    
+    // Add marriage link
+    allLinks.push({
+      source: { x: member1X, y: coupleY },
+      target: { x: member2X, y: coupleY },
+      type: 'marriage'
+    });
+    
+    // Position children below the couple
+    if (couple.children.length > 0) {
+      const coupleCenter = (member1X + member2X) / 2;
+      const childrenY = coupleY + levelHeight;
+      const childrenStartX = coupleCenter - (couple.children.length - 1) * NODE_SPACING.x / 2;
+      
+      couple.children.forEach((child, index) => {
+        const childX = childrenStartX + index * NODE_SPACING.x;
+        
+        allNodes.push({
+          data: child,
+          x: childX,
+          y: childrenY,
+          type: 'person'
+        });
+        
+        // Link from couple center to child
+        allLinks.push({
+          source: { x: coupleCenter, y: coupleY + NODE_RADIUS },
+          target: { x: childX, y: childrenY - NODE_RADIUS },
+          type: 'parent-child'
+        });
+      });
+    }
+    
+    currentX += NODE_SPACING.x * 2;
+  });
+  
+  // Render individuals
+  layout.individuals.forEach(individual => {
+    allNodes.push({
+      data: individual,
+      x: currentX,
+      y: currentY,
+      type: 'person'
+    });
+    
+    // Position children below individual
+    if (individual.children.length > 0) {
+      const childrenY = currentY + levelHeight;
+      const childrenStartX = currentX - (individual.children.length - 1) * NODE_SPACING.x / 2;
+      
+      individual.children.forEach((child, index) => {
+        const childX = childrenStartX + index * NODE_SPACING.x;
+        
+        allNodes.push({
+          data: child,
+          x: childX,
+          y: childrenY,
+          type: 'person'
+        });
+        
+        // Link from parent to child
+        allLinks.push({
+          source: { x: currentX, y: currentY + NODE_RADIUS },
+          target: { x: childX, y: childrenY - NODE_RADIUS },
+          type: 'parent-child'
+        });
+      });
+    }
+    
+    currentX += NODE_SPACING.x;
+  });
+  
+  // Render links
+  group.selectAll('.family-link')
+    .data(allLinks)
+    .join('line')
+    .attr('class', d => `family-link ${d.type}`)
+    .attr('x1', d => d.source.x)
+    .attr('y1', d => d.source.y)
+    .attr('x2', d => d.target.x)
+    .attr('y2', d => d.target.y)
+    .attr('stroke', d => d.type === 'marriage' ? '#e74c3c' : '#8b4513')
+    .attr('stroke-width', d => d.type === 'marriage' ? 3 : 2)
+    .attr('stroke-dasharray', d => d.type === 'marriage' ? '5,5' : 'none');
+  
+  // Render nodes
+  nodes = group.selectAll('.family-node')
+    .data(allNodes)
+    .join('g')
+    .attr('class', d => `family-node node ${d.data.gender || 'unknown'}`)
+    .attr('transform', d => `translate(${d.x},${d.y})`)
+    .on('click', (event, d) => {
+      document.dispatchEvent(
+        new CustomEvent('member-selected', { detail: d.data })
+      );
+    });
+
+  nodes.append('circle').attr('r', NODE_RADIUS);
+
+  nodes.append('text')
+    .attr('class', 'name-label')
+    .attr('dy', NODE_RADIUS + 14)
+    .text(d => {
+      if (showChinese) {
+        return d.data.name;
+      } else {
+        return d.data.chinese || d.data.name;
+      }
+    });
+
+  nodes.append('text')
+    .attr('class', 'year-label')
+    .attr('dy', NODE_RADIUS + 26)
+    .text(d => {
+      const b  = d.data.birth || '?';
+      const dd = d.data.death || '';
+      return dd ? `${b}–${dd}` : b;
+    });
+}
+
+/**
+ * Setup controls for zoom, language toggle, and search
+ * @param {HTMLElement} container - Tree container element
+ */
+function setupControls(container) {
+  const btnZoomIn  = document.getElementById('btn-zoom-in');
+  const btnZoomOut = document.getElementById('btn-zoom-out');
+  const btnReset   = document.getElementById('btn-reset');
+  const btnLang    = document.getElementById('btn-toggle-lang');
+
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+
+  if (btnZoomIn)  btnZoomIn.onclick  = () => svg.transition().call(zoom.scaleBy, 1.3);
+  if (btnZoomOut) btnZoomOut.onclick = () => svg.transition().call(zoom.scaleBy, 0.77);
+  if (btnReset)   btnReset.onclick   = () =>
+    svg.transition().call(zoom.transform, d3.zoomIdentity.translate(w / 2, 80).scale(0.8));
+
+  if (btnLang) btnLang.onclick = () => {
+    showChinese = !showChinese;
+    if (nodes) {
+      nodes.selectAll('text.name-label')
+        .text(d => {
+          if (showChinese) {
+            return d.data.name;
+          } else {
+            return d.data.chinese || d.data.name;
+          }
+        });
+    }
+  };
+
+  // ── Search ─────────────────────────────────────────────────────────────────
+  const searchBtn   = document.getElementById('search-btn');
+  const searchInput = document.getElementById('search-input');
+
+  function doSearch() {
+    const q = (searchInput?.value || '').trim().toLowerCase();
+    if (nodes) nodes.classed('highlighted', false);
+    if (!q || !nodes) return;
+
+    const matched = nodes.filter(d =>
+      d.data.name.toLowerCase().includes(q) ||
+      (d.data.chinese && d.data.chinese.includes(q))
+    );
+    matched.classed('highlighted', true);
+
+    if (!matched.empty()) {
+      const d     = matched.datum();
+      const scale = d3.zoomTransform(svg.node()).k;
+      svg.transition().duration(600).call(
+        zoom.transform,
+        d3.zoomIdentity
+          .translate(w / 2 - d.x * scale, h / 2 - d.y * scale)
+          .scale(scale)
+      );
+    }
+  }
+
+  if (searchBtn)   searchBtn.onclick = doSearch;
+  if (searchInput) searchInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') doSearch();
+  });
 }
