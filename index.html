@@ -34,10 +34,8 @@
     <button id="error-banner-close">✕</button>
   </div>
 
-  <!-- Left Sidebar -->
-  <div id="left-sidebar" class="hidden">
-    <button id="sidebar-toggle">◀</button>
-    
+  <!-- Left Sidebar (Always visible) -->
+  <div id="left-sidebar">
     <div id="sidebar-content">
       <!-- Member Details Section -->
       <div id="sidebar-detail" class="sidebar-section">
@@ -49,7 +47,7 @@
         </div>
       </div>
       
-      <!-- Recent Edits Section -->
+      <!-- Recent Edits Section (Scrollable) -->
       <div id="sidebar-history" class="sidebar-section hidden">
         <h3>📋 Recent Edits</h3>
         <ul id="sidebar-history-list"></ul>
@@ -70,12 +68,12 @@
         <input type="hidden" id="f-id" />
         <input type="hidden" id="f-parent-id" />
 
-        <label>English Name *
-          <input type="text" id="f-name" required placeholder="e.g. Lee Ah Kow" />
+        <label>Chinese Name 中文名 *
+          <input type="text" id="f-name" required placeholder="e.g. 李亚狗" />
           <span id="f-name-error" class="validation-error"></span>
         </label>
-        <label>Chinese Name
-          <input type="text" id="f-chinese" placeholder="e.g. 李亚狗" />
+        <label>Nickname 昵称
+          <input type="text" id="f-chinese" placeholder="e.g. Ah Kow" />
         </label>
         <label>Gender
           <select id="f-gender">
@@ -89,9 +87,6 @@
         </label>
         <label>Death Year / Date
           <input type="text" id="f-death" placeholder="Leave blank if living" />
-        </label>
-        <label>Spouse
-          <input type="text" id="f-spouse" placeholder="Spouse name" />
         </label>
         <label>Notes
           <textarea id="f-notes" rows="2" placeholder="Any notes..."></textarea>

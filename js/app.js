@@ -46,13 +46,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Member selected event — render detail panel in sidebar
   document.addEventListener('member-selected', (e) => {
-    showSidebar();
     renderDetailPanel(e.detail, _role, _members);
     wireDetailActions(e.detail);
   });
-
-  // Sidebar toggle
-  document.getElementById('sidebar-toggle')?.addEventListener('click', toggleSidebar);
 
   // Auth state changes
   onAuthStateChange(async (user, role) => {
@@ -147,23 +143,4 @@ export function showErrorBanner(message) {
   if (!banner || !text) return;
   text.textContent = message;
   banner.classList.remove('hidden');
-}
-
-// ── Sidebar helpers ───────────────────────────────────────────────────────────
-function showSidebar() {
-  const sidebar = document.getElementById('left-sidebar');
-  if (sidebar) {
-    sidebar.classList.remove('hidden');
-    document.body.classList.add('sidebar-open');
-  }
-}
-
-function toggleSidebar() {
-  const sidebar = document.getElementById('left-sidebar');
-  const toggle = document.getElementById('sidebar-toggle');
-  if (sidebar && toggle) {
-    sidebar.classList.toggle('hidden');
-    document.body.classList.toggle('sidebar-open');
-    toggle.textContent = sidebar.classList.contains('hidden') ? '◀' : '▶';
-  }
 }

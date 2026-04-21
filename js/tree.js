@@ -85,7 +85,14 @@ export function renderTree(members, role) {
   nodes.append('text')
     .attr('class', 'name-label')
     .attr('dy', NODE_RADIUS + 14)
-    .text(d => showChinese && d.data.chinese ? d.data.chinese : d.data.name);
+    .text(d => {
+      // Show Chinese name (now in 'name' field) or nickname (now in 'chinese' field)
+      if (showChinese) {
+        return d.data.name; // Chinese name
+      } else {
+        return d.data.chinese || d.data.name; // Nickname or Chinese name
+      }
+    });
 
   nodes.append('text')
     .attr('class', 'year-label')
@@ -111,7 +118,13 @@ export function renderTree(members, role) {
     showChinese = !showChinese;
     if (nodes) {
       nodes.selectAll('text.name-label')
-        .text(d => showChinese && d.data.chinese ? d.data.chinese : d.data.name);
+        .text(d => {
+          if (showChinese) {
+            return d.data.name; // Chinese name
+          } else {
+            return d.data.chinese || d.data.name; // Nickname or Chinese name
+          }
+        });
     }
   };
 
@@ -163,20 +176,24 @@ export function renderDetailPanel(member, role, allMembers = []) {
                : member.gender === 'female' ? '♀ Female' : '—';
   const birth  = member.birth  || '—';
   const death  = member.death  || 'Living';
-  const spouse = member.spouse || '—';
+  const nickname = member.chinese || '—';
   const notes  = member.notes  || '—';
+
+  // Find spouse by checking who has this member's ID as their spouse field
+  const spouseObj = allMembers.find(m => m.spouse === member.id);
+  const spouseName = spouseObj ? spouseObj.name : (member.spouse || '—');
 
   const canEdit = role === 'editor' || role === 'admin';
   const hasChildren = allMembers.some(m => m.parentId === member.id);
 
   content.innerHTML = `
     <h2 style="margin-bottom: 8px; font-size: 22px; color: #2c1810;">${member.name}</h2>
-    ${member.chinese ? `<div class="chinese-name">${member.chinese}</div>` : ''}
+    ${nickname !== '—' ? `<div class="chinese-name">${nickname}</div>` : ''}
     <table>
       <tr><td>Gender</td><td>${gender}</td></tr>
       <tr><td>Born</td><td>${birth}</td></tr>
       <tr><td>Died</td><td>${death}</td></tr>
-      <tr><td>Spouse</td><td>${spouse}</td></tr>
+      <tr><td>Spouse</td><td>${spouseName}</td></tr>
       <tr><td>Notes</td><td>${notes}</td></tr>
     </table>
     ${canEdit ? `

@@ -51,7 +51,6 @@ export function openEditForm(member) {
   document.getElementById('f-gender').value    = member.gender   || 'male';
   document.getElementById('f-birth').value     = member.birth    || '';
   document.getElementById('f-death').value     = member.death    || '';
-  document.getElementById('f-spouse').value    = member.spouse   || '';
   document.getElementById('f-notes').value     = member.notes    || '';
   document.getElementById('modal-title').textContent = 'Edit Member';
   document.getElementById('edit-modal').classList.remove('hidden');
@@ -96,7 +95,6 @@ export function initEditForm(onSaved) {
       gender:   document.getElementById('f-gender').value,
       birth:    document.getElementById('f-birth').value.trim(),
       death:    document.getElementById('f-death').value.trim(),
-      spouse:   document.getElementById('f-spouse').value.trim(),
       notes:    document.getElementById('f-notes').value.trim(),
       parentId: parentId || null,
     };
