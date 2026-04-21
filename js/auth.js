@@ -1,6 +1,7 @@
 import { auth, db } from './firebase-config.js';
 import {
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider,
   signOut as fbSignOut,
   onAuthStateChanged
@@ -22,19 +23,31 @@ let _currentUser = null;
 export async function signIn() {
   try {
     const provider = new GoogleAuthProvider();
-    const credential = await signInWithPopup(auth, provider);
-    const user = credential.user;
+    // Use redirect instead of popup — works reliably on GitHub Pages
+    await signInWithRedirect(auth, provider);
+    // Page will redirect to Google, then back — result handled in handleRedirectResult()
+  } catch (err) {
+    showAuthError(`Sign-in failed: ${err.message}`);
+  }
+}
+
+/**
+ * Call this on page load to handle the redirect result after Google sign-in.
+ * Must be called before any other auth operations.
+ */
+export async function handleRedirectResult() {
+  try {
+    const result = await getRedirectResult(auth);
+    if (!result) return; // No redirect result — normal page load
+
+    const user = result.user;
 
     // Small delay to ensure Firestore is ready
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Check for existing user record by uid
     const userDoc = await getDoc(doc(db, 'users', user.uid));
-
-    if (userDoc.exists()) {
-      // Active user record found — role resolved via onAuthStateChanged
-      return;
-    }
+    if (userDoc.exists()) return; // Already registered
 
     // Check for pending invite by email
     const pendingQuery = query(
