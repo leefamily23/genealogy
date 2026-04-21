@@ -34,24 +34,32 @@
     <button id="error-banner-close">✕</button>
   </div>
 
+  <!-- Left Sidebar -->
+  <div id="left-sidebar" class="hidden">
+    <button id="sidebar-toggle">◀</button>
+    
+    <div id="sidebar-content">
+      <!-- Member Details Section -->
+      <div id="sidebar-detail" class="sidebar-section">
+        <h3>Member Details</h3>
+        <div id="sidebar-detail-content">
+          <p style="color: #999; text-align: center; padding: 20px;">
+            Click on a family member to view details
+          </p>
+        </div>
+      </div>
+      
+      <!-- Recent Edits Section -->
+      <div id="sidebar-history" class="sidebar-section hidden">
+        <h3>📋 Recent Edits</h3>
+        <ul id="sidebar-history-list"></ul>
+      </div>
+    </div>
+  </div>
+
   <!-- Tree container -->
   <div id="tree-container">
     <svg id="tree-svg"><g id="tree-group"></g></svg>
-  </div>
-
-  <!-- Member detail panel -->
-  <div id="detail-panel" class="hidden">
-    <button id="detail-close">✕</button>
-    <div id="detail-content"></div>
-  </div>
-
-  <!-- Edit History Panel (top-right, signed-in only) -->
-  <div id="history-panel" class="hidden">
-    <div id="history-header">
-      <span>📋 Recent Edits</span>
-      <button id="history-toggle">▲</button>
-    </div>
-    <ul id="history-list"></ul>
   </div>
 
   <!-- Edit Form Modal -->

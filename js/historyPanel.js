@@ -3,18 +3,18 @@ import { subscribeHistory } from './db.js';
 let _unsubscribe = null;
 
 /**
- * Start listening to edit history and show the panel.
+ * Start listening to edit history and show in sidebar.
  * Called on sign-in.
  */
 export function startHistoryPanel() {
-  const panel = document.getElementById('history-panel');
-  if (panel) panel.classList.remove('hidden');
+  const section = document.getElementById('sidebar-history');
+  if (section) section.classList.remove('hidden');
 
   _unsubscribe = subscribeHistory(renderEntries);
 }
 
 /**
- * Stop listening and hide the panel.
+ * Stop listening and hide the sidebar section.
  * Called on sign-out.
  */
 export function stopHistoryPanel() {
@@ -22,34 +22,33 @@ export function stopHistoryPanel() {
     _unsubscribe();
     _unsubscribe = null;
   }
-  const panel = document.getElementById('history-panel');
-  if (panel) panel.classList.add('hidden');
+  const section = document.getElementById('sidebar-history');
+  if (section) section.classList.add('hidden');
 
-  const list = document.getElementById('history-list');
+  const list = document.getElementById('sidebar-history-list');
   if (list) list.innerHTML = '';
 }
 
 /**
- * Render history entries into the panel list.
+ * Render history entries into the sidebar list.
  * @param {object[]} entries
  */
 function renderEntries(entries) {
-  const list = document.getElementById('history-list');
+  const list = document.getElementById('sidebar-history-list');
   if (!list) return;
 
   list.innerHTML = '';
 
   if (entries.length === 0) {
-    list.innerHTML = '<li class="history-empty">No edits yet.</li>';
+    list.innerHTML = '<li style="color: #999; text-align: center;">No edits yet.</li>';
     return;
   }
 
   entries.forEach(entry => {
     const li = document.createElement('li');
-    li.className = 'history-entry';
     li.innerHTML = `
       <span class="history-actor">${escapeHtml(entry.actorName || 'Unknown')}</span>
-      <span class="history-desc">${escapeHtml(entry.description || '')}</span>
+      <span style="display: block; margin-top: 4px;">${escapeHtml(entry.description || '')}</span>
       <span class="history-time">${relativeTime(entry.timestamp)}</span>
     `;
     list.appendChild(li);
@@ -93,16 +92,8 @@ function escapeHtml(str) {
 }
 
 /**
- * Wire the collapse/expand toggle button.
- * Called once on DOMContentLoaded.
+ * No longer needed - sidebar doesn't have toggle button
  */
 export function initHistoryToggle() {
-  const toggle = document.getElementById('history-toggle');
-  const list   = document.getElementById('history-list');
-  if (!toggle || !list) return;
-
-  toggle.addEventListener('click', () => {
-    const isCollapsed = list.classList.toggle('collapsed');
-    toggle.textContent = isCollapsed ? '▼' : '▲';
-  });
+  // Sidebar history is always expanded
 }

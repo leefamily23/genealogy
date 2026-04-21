@@ -1,7 +1,7 @@
 import { signIn, signOut, onAuthStateChange, handleRedirectResult } from './auth.js';
 import { getAllMembers }                        from './db.js';
 import { renderTree, renderDetailPanel }        from './tree.js';
-import { initEditForm, openAddForm, openEditForm, handleDelete } from './editForm.js';
+import { initEditForm, openAddForm, openEditForm, openAddSpouseForm, handleDelete } from './editForm.js';
 import { startHistoryPanel, stopHistoryPanel, initHistoryToggle } from './historyPanel.js';
 import { openUserManagement, initUserManagement } from './userManagement.js';
 import './migrate.js'; // exposes window.migrateToFirestore
@@ -12,6 +12,9 @@ let _role    = null;
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
+
+  // Handle redirect result (for iOS sign-in)
+  await handleRedirectResult();
 
   // Init one-time UI wiring
   initHistoryToggle();
@@ -41,11 +44,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Global error event
   document.addEventListener('show-error', (e) => showErrorBanner(e.detail));
 
-  // Member selected event — render detail panel
+  // Member selected event — render detail panel in sidebar
   document.addEventListener('member-selected', (e) => {
-    renderDetailPanel(e.detail, _role);
+    showSidebar();
+    renderDetailPanel(e.detail, _role, _members);
     wireDetailActions(e.detail);
   });
+
+  // Sidebar toggle
+  document.getElementById('sidebar-toggle')?.addEventListener('click', toggleSidebar);
 
   // Auth state changes
   onAuthStateChange(async (user, role) => {
@@ -105,10 +112,19 @@ function updateAuthUI(user, role) {
 
 // ── Wire detail panel action buttons ─────────────────────────────────────────
 function wireDetailActions(member) {
+  // Check if member has children
+  const hasChildren = _members.some(m => m.parentId === member.id);
+  
   document.querySelector('.btn-add-child')
     ?.addEventListener('click', () => {
       document.getElementById('detail-panel')?.classList.add('hidden');
       openAddForm(member.id);
+    });
+
+  document.querySelector('.btn-add-spouse')
+    ?.addEventListener('click', () => {
+      document.getElementById('detail-panel')?.classList.add('hidden');
+      openAddSpouseForm(member.id);
     });
 
   document.querySelector('.btn-edit')
@@ -120,7 +136,7 @@ function wireDetailActions(member) {
   document.querySelector('.btn-delete')
     ?.addEventListener('click', () => {
       document.getElementById('detail-panel')?.classList.add('hidden');
-      handleDelete(member.id, member.name, reloadTree);
+      handleDelete(member.id, member.name, hasChildren, reloadTree);
     });
 }
 
@@ -131,4 +147,23 @@ export function showErrorBanner(message) {
   if (!banner || !text) return;
   text.textContent = message;
   banner.classList.remove('hidden');
+}
+
+// ── Sidebar helpers ───────────────────────────────────────────────────────────
+function showSidebar() {
+  const sidebar = document.getElementById('left-sidebar');
+  if (sidebar) {
+    sidebar.classList.remove('hidden');
+    document.body.classList.add('sidebar-open');
+  }
+}
+
+function toggleSidebar() {
+  const sidebar = document.getElementById('left-sidebar');
+  const toggle = document.getElementById('sidebar-toggle');
+  if (sidebar && toggle) {
+    sidebar.classList.toggle('hidden');
+    document.body.classList.toggle('sidebar-open');
+    toggle.textContent = sidebar.classList.contains('hidden') ? '◀' : '▶';
+  }
 }

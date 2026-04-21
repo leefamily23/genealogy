@@ -149,15 +149,15 @@ export function renderTree(members, role) {
 }
 
 /**
- * Render the detail panel for a selected member.
+ * Render the detail panel for a selected member in the left sidebar.
  * Called by app.js on 'member-selected' event.
  * @param {object} member
  * @param {string|null} role
+ * @param {object[]} allMembers - All family members to check for children
  */
-export function renderDetailPanel(member, role) {
-  const panel   = document.getElementById('detail-panel');
-  const content = document.getElementById('detail-content');
-  if (!panel || !content) return;
+export function renderDetailPanel(member, role, allMembers = []) {
+  const content = document.getElementById('sidebar-detail-content');
+  if (!content) return;
 
   const gender = member.gender === 'male' ? '♂ Male'
                : member.gender === 'female' ? '♀ Female' : '—';
@@ -167,9 +167,10 @@ export function renderDetailPanel(member, role) {
   const notes  = member.notes  || '—';
 
   const canEdit = role === 'editor' || role === 'admin';
+  const hasChildren = allMembers.some(m => m.parentId === member.id);
 
   content.innerHTML = `
-    <h2>${member.name}</h2>
+    <h2 style="margin-bottom: 8px; font-size: 22px; color: #2c1810;">${member.name}</h2>
     ${member.chinese ? `<div class="chinese-name">${member.chinese}</div>` : ''}
     <table>
       <tr><td>Gender</td><td>${gender}</td></tr>
@@ -181,10 +182,9 @@ export function renderDetailPanel(member, role) {
     ${canEdit ? `
     <div class="detail-actions">
       <button class="btn-action btn-add-child" data-id="${member.id}">➕ Add Child</button>
-      <button class="btn-action btn-edit"      data-id="${member.id}">✏️ Edit</button>
-      <button class="btn-action btn-delete"    data-id="${member.id}" data-name="${member.name}">🗑️ Delete</button>
+      <button class="btn-action btn-add-spouse" data-id="${member.id}">💑 Add Spouse</button>
+      <button class="btn-action btn-edit" data-id="${member.id}">✏️ Edit</button>
+      ${!hasChildren ? `<button class="btn-action btn-delete" data-id="${member.id}" data-name="${member.name}">🗑️ Delete</button>` : ''}
     </div>` : ''}
   `;
-
-  panel.classList.remove('hidden');
 }

@@ -371,3 +371,182 @@ header .subtitle { font-size: 0.8rem; opacity: 0.85; flex: 1; white-space: nowra
 
 /* ── Utility ──────────────────────────────────────────────── */
 .hidden { display: none !important; }
+
+
+/* ── Left Sidebar ─────────────────────────────────────────── */
+#left-sidebar {
+  position: fixed;
+  left: 0;
+  top: 60px;
+  bottom: 0;
+  width: 320px;
+  background: white;
+  border-right: 2px solid #ddd;
+  overflow-y: auto;
+  transition: transform 0.3s ease;
+  z-index: 100;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+}
+
+#left-sidebar.hidden {
+  transform: translateX(-100%);
+}
+
+#sidebar-toggle {
+  position: absolute;
+  right: -32px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: white;
+  border: 2px solid #ddd;
+  border-left: none;
+  padding: 12px 6px;
+  cursor: pointer;
+  border-radius: 0 8px 8px 0;
+  font-size: 16px;
+  transition: background 0.2s;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+
+#sidebar-toggle:hover {
+  background: #f0f0f0;
+}
+
+#left-sidebar:not(.hidden) #sidebar-toggle {
+  content: '▶';
+}
+
+.sidebar-section {
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.sidebar-section h3 {
+  margin: 0 0 15px 0;
+  font-size: 18px;
+  color: #8b1a1a;
+  border-bottom: 2px solid #8b1a1a;
+  padding-bottom: 8px;
+}
+
+.sidebar-section table {
+  width: 100%;
+  font-size: 14px;
+}
+
+.sidebar-section table td {
+  padding: 6px 0;
+  vertical-align: top;
+}
+
+.sidebar-section table td:first-child {
+  font-weight: 600;
+  color: #666;
+  width: 80px;
+}
+
+.sidebar-section .chinese-name {
+  font-size: 20px;
+  color: #8b1a1a;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.sidebar-section .detail-actions {
+  margin-top: 15px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sidebar-section .btn-action {
+  flex: 1;
+  min-width: 120px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.btn-add-child {
+  background: #27ae60;
+  color: white;
+}
+
+.btn-add-child:hover {
+  background: #229954;
+}
+
+.btn-add-spouse {
+  background: #e91e63;
+  color: white;
+}
+
+.btn-add-spouse:hover {
+  background: #c2185b;
+}
+
+.btn-edit {
+  background: #3498db;
+  color: white;
+}
+
+.btn-edit:hover {
+  background: #2980b9;
+}
+
+.btn-delete {
+  background: #e74c3c;
+  color: white;
+}
+
+.btn-delete:hover {
+  background: #c0392b;
+}
+
+#sidebar-history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#sidebar-history-list li {
+  padding: 10px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 13px;
+}
+
+#sidebar-history-list li:last-child {
+  border-bottom: none;
+}
+
+#sidebar-history-list .history-actor {
+  font-weight: 600;
+  color: #8b1a1a;
+}
+
+#sidebar-history-list .history-time {
+  color: #999;
+  font-size: 11px;
+  display: block;
+  margin-top: 4px;
+}
+
+/* Adjust tree container when sidebar is open */
+body.sidebar-open #tree-container {
+  margin-left: 320px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  #left-sidebar {
+    width: 100%;
+    max-width: 320px;
+  }
+  
+  body.sidebar-open #tree-container {
+    margin-left: 0;
+  }
+}

@@ -14,6 +14,19 @@ export function validateMemberName(name) {
 }
 
 /**
+ * Open the edit form in "Add Spouse" mode.
+ * @param {string} memberId - The member to add spouse to
+ */
+export function openAddSpouseForm(memberId) {
+  resetForm();
+  document.getElementById('f-parent-id').value = ''; // Spouse has no parent in tree
+  document.getElementById('f-id').value = '';
+  document.getElementById('f-spouse').value = memberId; // Link back to original member
+  document.getElementById('modal-title').textContent = 'Add Spouse';
+  document.getElementById('edit-modal').classList.remove('hidden');
+}
+
+/**
  * Open the edit form in "Add Child" mode.
  * @param {string} parentId
  */
@@ -130,7 +143,13 @@ export function initEditForm(onSaved) {
 }
 
 // ── Delete handler ────────────────────────────────────────────────────────────
-export async function handleDelete(memberId, memberName, onDeleted) {
+export async function handleDelete(memberId, memberName, hasChildren, onDeleted) {
+  // Rule: Only allow delete if member is a leaf node (no children)
+  if (hasChildren) {
+    alert(`Cannot delete "${memberName}" because they have children.\nDelete the children first.`);
+    return;
+  }
+
   const confirmed = window.confirm(
     `Are you sure you want to delete "${memberName}"?\nThis cannot be undone.`
   );
