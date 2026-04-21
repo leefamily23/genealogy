@@ -1,7 +1,5 @@
 import { auth, db } from './firebase-config.js';
 import {
-  signInWithRedirect,
-  getRedirectResult,
   GoogleAuthProvider,
   signOut as fbSignOut,
   onAuthStateChanged
@@ -23,11 +21,16 @@ let _currentUser = null;
 export async function signIn() {
   try {
     const provider = new GoogleAuthProvider();
-    // Use redirect instead of popup — works reliably on GitHub Pages
-    await signInWithRedirect(auth, provider);
-    // Page will redirect to Google, then back — result handled in handleRedirectResult()
+    // Use popup instead of redirect for more reliable sign-in
+    const { signInWithPopup } = await import(
+      'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js'
+    );
+    await signInWithPopup(auth, provider);
+    // Auth state change will handle the rest
   } catch (err) {
-    showAuthError(`Sign-in failed: ${err.message}`);
+    if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+      showAuthError(`Sign-in failed: ${err.message}`);
+    }
   }
 }
 
@@ -112,24 +115,53 @@ export function onAuthStateChange(callback) {
     }
 
     try {
-      // Retry up to 3 times with delay (Firestore may be slow on first load)
-      let userDoc = null;
-      for (let i = 0; i < 3; i++) {
-        const snap = await getDoc(doc(db, 'users', user.uid));
-        if (snap.exists()) { userDoc = snap; break; }
-        await new Promise(r => setTimeout(r, 1000));
-      }
-
-      if (userDoc) {
+      // Check for user record
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      
+      if (userDoc.exists()) {
         _currentRole = userDoc.data().role;
         _currentUser = user;
         callback(user, _currentRole);
       } else {
-        _currentRole = null;
-        _currentUser = null;
-        callback(user, null);
+        // Check for pending invite
+        const pendingQuery = query(
+          collection(db, 'users'),
+          where('email', '==', user.email),
+          where('status', '==', 'pending')
+        );
+        const pendingSnap = await getDocs(pendingQuery);
+
+        if (!pendingSnap.empty) {
+          // Activate pending invite
+          const pendingDoc = pendingSnap.docs[0];
+          const pendingData = pendingDoc.data();
+          const { setDoc, deleteDoc } = await import(
+            'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'
+          );
+          await setDoc(doc(db, 'users', user.uid), {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName || user.email,
+            role: pendingData.role || 'editor',
+            status: 'active',
+            createdAt: pendingData.createdAt
+          });
+          await deleteDoc(doc(db, 'users', pendingDoc.id));
+          
+          _currentRole = pendingData.role || 'editor';
+          _currentUser = user;
+          callback(user, _currentRole);
+        } else {
+          // Not authorized
+          await fbSignOut(auth);
+          _currentRole = null;
+          _currentUser = null;
+          callback(null, null);
+          showAuthError('You are not authorised to edit. Contact an admin.');
+        }
       }
     } catch (err) {
+      console.error('Auth state error:', err);
       _currentRole = null;
       _currentUser = null;
       callback(user, null);
