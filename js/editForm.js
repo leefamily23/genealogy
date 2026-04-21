@@ -21,8 +21,12 @@ export function openAddSpouseForm(memberId) {
   resetForm();
   document.getElementById('f-parent-id').value = ''; // Spouse has no parent in tree
   document.getElementById('f-id').value = '';
-  document.getElementById('f-spouse').value = memberId; // Link back to original member
   document.getElementById('modal-title').textContent = 'Add Spouse';
+  
+  // Store the original member ID for linking after creation
+  const form = document.getElementById('member-form');
+  form.dataset.spouseOf = memberId;
+  
   document.getElementById('edit-modal').classList.remove('hidden');
 }
 
@@ -62,6 +66,12 @@ export function openEditForm(member) {
 export function closeForm() {
   document.getElementById('edit-modal').classList.add('hidden');
   resetForm();
+  
+  // Clear any spouse relationship data
+  const form = document.getElementById('member-form');
+  if (form && form.dataset.spouseOf) {
+    delete form.dataset.spouseOf;
+  }
 }
 
 function resetForm() {
@@ -89,6 +99,8 @@ export function initEditForm(onSaved) {
 
     const id       = document.getElementById('f-id').value.trim();
     const parentId = document.getElementById('f-parent-id').value.trim();
+    const spouseOf = form.dataset.spouseOf; // Check if this is a spouse creation
+    
     const member   = {
       name:     name.trim(),
       chinese:  document.getElementById('f-chinese').value.trim(),
@@ -116,18 +128,32 @@ export function initEditForm(onSaved) {
           timestamp:          new Date().toISOString(),
         });
       } else {
-        // Add new child
-        const newId = await db.addMember({ ...member, id: crypto.randomUUID() });
+        // Add new member
+        const newMember = { ...member, id: crypto.randomUUID() };
+        await db.addMember(newMember);
+        
+        // If this is a spouse, update both members to reference each other
+        if (spouseOf) {
+          // Update the new spouse to reference the original member
+          await db.updateMember(newMember.id, { ...newMember, spouse: spouseOf });
+          // Update the original member to reference the new spouse
+          await db.updateMember(spouseOf, { spouse: newMember.id });
+        }
+        
         await db.addHistoryEntry({
           actorUid:           user?.uid || '',
           actorName,
           actionType:         'add',
-          description:        `added ${member.name}`,
+          description:        spouseOf ? `added spouse ${member.name}` : `added ${member.name}`,
           affectedMemberName: member.name,
           parentMemberName:   '',
           timestamp:          new Date().toISOString(),
         });
       }
+      
+      // Clear the spouseOf data attribute
+      delete form.dataset.spouseOf;
+      
       closeForm();
       if (onSaved) onSaved();
     } catch (err) {

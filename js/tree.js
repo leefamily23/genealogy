@@ -181,7 +181,7 @@ export function renderDetailPanel(member, role, allMembers = []) {
 
   // Find spouse by checking who has this member's ID as their spouse field
   const spouseObj = allMembers.find(m => m.spouse === member.id);
-  const spouseName = spouseObj ? spouseObj.name : (member.spouse || '—');
+  const spouseName = spouseObj ? spouseObj.name : (member.spouse ? allMembers.find(m => m.id === member.spouse)?.name || '—' : '—');
 
   const canEdit = role === 'editor' || role === 'admin';
   const hasChildren = allMembers.some(m => m.parentId === member.id);
