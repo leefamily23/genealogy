@@ -2,23 +2,36 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // TEMPORARY: Allow authenticated users to read/write users collection for initial setup
-    // TODO: Restore secure rules after first admin is created
-    
-    // family: public read, authenticated write (temporary)
+    // Helper: get the caller's role from the users collection
+    function getRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    // Helper: caller is signed in AND has role editor or admin
+    function isEditorOrAdmin() {
+      return request.auth != null && getRole() in ['editor', 'admin'];
+    }
+
+    // Helper: caller is signed in AND has role admin
+    function isAdmin() {
+      return request.auth != null && getRole() == 'admin';
+    }
+
+    // family: public read, editor/admin write
     match /family/{memberId} {
       allow read:  if true;
-      allow write: if request.auth != null;
+      allow write: if isEditorOrAdmin();
     }
 
-    // users: authenticated read/write (temporary - for initial admin setup)
+    // users: admin read/write only
     match /users/{userId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if isAdmin();
     }
 
-    // editHistory: signed-in read/write
+    // editHistory: signed-in read, editor/admin write
     match /editHistory/{entryId} {
-      allow read, write: if request.auth != null;
+      allow read:  if request.auth != null;
+      allow write: if isEditorOrAdmin();
     }
   }
 }
