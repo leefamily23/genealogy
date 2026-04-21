@@ -51,10 +51,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Auth state changes
-  onAuthStateChange((user, role) => {
+  onAuthStateChange(async (user, role) => {
     _role = role;
     updateAuthUI(user, role);
-    renderTree(_members, role);
+    
+    // Reload tree data when auth state changes to ensure we have fresh data
+    await reloadTree();
 
     if (user && role) {
       startHistoryPanel();
@@ -62,9 +64,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       stopHistoryPanel();
     }
   });
-
-  // Initial tree load
-  await reloadTree();
 });
 
 // ── Reload tree from Firestore ────────────────────────────────────────────────
