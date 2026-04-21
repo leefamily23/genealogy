@@ -75,9 +75,14 @@ export async function handleRedirectResult() {
       return;
     }
 
-    // Not authorised — sign out
-    await fbSignOut(auth);
-    showAuthError('You are not authorised to edit. Contact an admin.');
+    // TEMPORARY: Don't sign out - allow setup of first admin
+    // Not authorised — show warning but stay signed in for setup
+    console.warn('⚠️ No user record found. Run setupFirstAdmin() to create admin user.');
+    showAuthError('No user record found. Open console and run: setupFirstAdmin()');
+    
+    // RESTORE THIS AFTER FIRST ADMIN IS CREATED:
+    // await fbSignOut(auth);
+    // showAuthError('You are not authorised to edit. Contact an admin.');
   } catch (err) {
     if (err.code !== 'auth/popup-closed-by-user') {
       showAuthError(`Sign-in failed: ${err.message}`);
