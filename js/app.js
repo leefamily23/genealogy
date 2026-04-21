@@ -1,4 +1,4 @@
-import { signIn, signOut, onAuthStateChange } from './auth.js';
+import { signIn, signOut, onAuthStateChange, handleRedirectResult } from './auth.js';
 import { getAllMembers }                        from './db.js';
 import { renderTree, renderDetailPanel }        from './tree.js';
 import { initEditForm, openAddForm, openEditForm, handleDelete } from './editForm.js';
@@ -12,6 +12,9 @@ let _role    = null;
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
+
+  // Handle redirect result (for iOS sign-in)
+  await handleRedirectResult();
 
   // Init one-time UI wiring
   initHistoryToggle();

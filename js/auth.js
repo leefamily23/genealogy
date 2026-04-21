@@ -2,7 +2,8 @@ import { auth, db } from './firebase-config.js';
 import {
   GoogleAuthProvider,
   signOut as fbSignOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  getRedirectResult
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import {
   doc, getDoc, collection, query, where, getDocs
@@ -11,6 +12,24 @@ import {
 // Cached role for the current session
 let _currentRole = null;
 let _currentUser = null;
+
+/**
+ * Handle redirect result on page load (for iOS sign-in).
+ * Call this once when the app initializes.
+ */
+export async function handleRedirectResult() {
+  try {
+    const result = await getRedirectResult(auth);
+    // If there's a result, onAuthStateChange will handle the activation
+    if (result) {
+      console.log('Redirect sign-in successful');
+    }
+  } catch (err) {
+    if (err.code !== 'auth/popup-closed-by-user') {
+      showAuthError(`Sign-in failed: ${err.message}`);
+    }
+  }
+}
 
 /**
  * Sign in with Google popup.
