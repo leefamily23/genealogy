@@ -1,0 +1,176 @@
+/* ── Reset & Base ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: #f5f0e8;
+  color: #2c1810;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ───────────────────────────────────────────────── */
+header {
+  background: linear-gradient(135deg, #8b1a1a, #c0392b);
+  color: #fff;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  z-index: 10;
+}
+
+header h1 { font-size: 1.5rem; letter-spacing: 2px; }
+header .subtitle { font-size: 0.85rem; opacity: 0.85; flex: 1; }
+
+.controls { display: flex; gap: 8px; flex-wrap: wrap; }
+.controls button {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.4);
+  color: #fff;
+  padding: 5px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background 0.2s;
+}
+.controls button:hover { background: rgba(255,255,255,0.3); }
+
+/* ── Tree SVG ─────────────────────────────────────────────── */
+#tree-container {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+#tree-svg {
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+#tree-svg:active { cursor: grabbing; }
+
+/* ── Nodes ────────────────────────────────────────────────── */
+.node circle {
+  stroke-width: 2.5px;
+  transition: r 0.2s, filter 0.2s;
+  cursor: pointer;
+}
+.node circle:hover { filter: brightness(1.2); }
+
+.node.male   circle { fill: #4a90d9; stroke: #2c6fad; }
+.node.female circle { fill: #e87d9a; stroke: #c0506e; }
+.node.unknown circle { fill: #aaa;   stroke: #777; }
+
+.node text {
+  font-size: 11px;
+  fill: #1a1a1a;
+  pointer-events: none;
+  text-anchor: middle;
+}
+.node text.name-label  { font-weight: 600; }
+.node text.year-label  { font-size: 9px; fill: #555; }
+
+/* Highlighted node (search result) */
+.node.highlighted circle {
+  stroke: #f39c12 !important;
+  stroke-width: 4px !important;
+  filter: drop-shadow(0 0 6px #f39c12);
+}
+
+/* ── Links ────────────────────────────────────────────────── */
+.link {
+  fill: none;
+  stroke: #a0856a;
+  stroke-width: 1.5px;
+  stroke-opacity: 0.7;
+}
+
+/* ── Detail Panel ─────────────────────────────────────────── */
+#detail-panel {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  width: 280px;
+  background: #fff8f0;
+  border: 1px solid #c9a87c;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  z-index: 100;
+  transition: transform 0.3s;
+}
+#detail-panel.hidden { display: none; }
+
+#detail-close {
+  position: absolute;
+  top: 10px; right: 12px;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #888;
+}
+#detail-close:hover { color: #333; }
+
+#detail-content h2 {
+  font-size: 1.2rem;
+  color: #8b1a1a;
+  margin-bottom: 4px;
+}
+#detail-content .chinese-name {
+  font-size: 1.4rem;
+  color: #c0392b;
+  margin-bottom: 12px;
+}
+#detail-content table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+#detail-content td {
+  padding: 4px 6px;
+  border-bottom: 1px solid #f0e0cc;
+}
+#detail-content td:first-child {
+  font-weight: 600;
+  color: #7a4a2a;
+  width: 80px;
+}
+
+/* ── Search Bar ───────────────────────────────────────────── */
+#search-bar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  background: #fff;
+  padding: 8px 12px;
+  border-radius: 30px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  z-index: 100;
+}
+#search-input {
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 0.85rem;
+  outline: none;
+  width: 200px;
+}
+#search-btn {
+  background: #8b1a1a;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 5px 14px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+#search-btn:hover { background: #c0392b; }

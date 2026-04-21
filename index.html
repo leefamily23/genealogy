@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>家族族谱 | Family Genealogy</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <h1>🌳 家族族谱</h1>
+    <p class="subtitle">Family Genealogy Tree</p>
+    <div class="controls">
+      <button id="btn-zoom-in">＋ Zoom In</button>
+      <button id="btn-zoom-out">－ Zoom Out</button>
+      <button id="btn-reset">⟳ Reset</button>
+      <button id="btn-toggle-lang">中 / EN</button>
+    </div>
+  </header>
+
+  <!-- Tree container -->
+  <div id="tree-container">
+    <svg id="tree-svg">
+      <g id="tree-group"></g>
+    </svg>
+  </div>
+
+  <!-- Member detail panel -->
+  <div id="detail-panel" class="hidden">
+    <button id="detail-close">✕</button>
+    <div id="detail-content"></div>
+  </div>
+
+  <!-- Search -->
+  <div id="search-bar">
+    <input type="text" id="search-input" placeholder="Search name..." />
+    <button id="search-btn">🔍</button>
+  </div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="js/tree.js"></script>
+</body>
+</html>

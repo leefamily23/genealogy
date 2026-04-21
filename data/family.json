@@ -1,0 +1,69 @@
+{
+  "id": "1",
+  "name": "Ancestor Name",
+  "chinese": "祖先",
+  "birth": "1900",
+  "death": "1970",
+  "gender": "male",
+  "spouse": "Spouse Name",
+  "notes": "Founder of the family",
+  "children": [
+    {
+      "id": "2",
+      "name": "Son One",
+      "chinese": "长子",
+      "birth": "1925",
+      "death": "1995",
+      "gender": "male",
+      "spouse": "Wife One",
+      "notes": "",
+      "children": [
+        {
+          "id": "4",
+          "name": "Grandson One",
+          "chinese": "长孙",
+          "birth": "1950",
+          "death": "",
+          "gender": "male",
+          "spouse": "Wife A",
+          "notes": "",
+          "children": []
+        },
+        {
+          "id": "5",
+          "name": "Granddaughter One",
+          "chinese": "长孙女",
+          "birth": "1953",
+          "death": "",
+          "gender": "female",
+          "spouse": "",
+          "notes": "",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "name": "Son Two",
+      "chinese": "次子",
+      "birth": "1928",
+      "death": "2000",
+      "gender": "male",
+      "spouse": "Wife Two",
+      "notes": "",
+      "children": [
+        {
+          "id": "6",
+          "name": "Grandson Two",
+          "chinese": "次孙",
+          "birth": "1955",
+          "death": "",
+          "gender": "male",
+          "spouse": "",
+          "notes": "",
+          "children": []
+        }
+      ]
+    }
+  ]
+}
