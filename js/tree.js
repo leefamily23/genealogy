@@ -1,111 +1,138 @@
 // ── Config ────────────────────────────────────────────────────────────────────
-const NODE_RADIUS   = 22;
-const NODE_SPACING  = { x: 120, y: 160 };
-let   showChinese   = true;
+const NODE_RADIUS  = 22;
+const NODE_SPACING = { x: 120, y: 160 };
+let   showChinese  = true;
+let   _currentRole = null;
 
-// ── Load data & render ────────────────────────────────────────────────────────
-fetch('data/family.json')
-  .then(r => r.json())
-  .then(data => init(data))
-  .catch(err => {
-    document.getElementById('tree-container').innerHTML =
-      `<p style="padding:40px;color:red">Failed to load family.json: ${err}</p>`;
-  });
+// ── Module-level D3 references ────────────────────────────────────────────────
+let svg, group, zoom, nodes;
 
-// ── Main init ─────────────────────────────────────────────────────────────────
-function init(data) {
-  const svg       = d3.select('#tree-svg');
-  const group     = d3.select('#tree-group');
+/**
+ * Render (or re-render) the family tree from a flat members array.
+ * @param {object[]} members  Flat array of FamilyMember with parentId
+ * @param {string|null} role  'viewer' | 'editor' | 'admin' | null
+ */
+export function renderTree(members, role) {
+  _currentRole = role;
+
   const container = document.getElementById('tree-container');
+  const treeGroup = document.getElementById('tree-group');
 
-  // D3 hierarchy
-  const root = d3.hierarchy(data);
+  // Clear previous render
+  treeGroup.innerHTML = '';
 
-  // Tree layout
+  if (!members || members.length === 0) {
+    container.innerHTML =
+      '<p style="padding:40px;color:#c0392b;font-size:1rem">' +
+      'Unable to load family data. Please check your connection and try again.</p>';
+    return;
+  }
+
+  svg   = d3.select('#tree-svg');
+  group = d3.select('#tree-group');
+
+  // ── Build hierarchy from flat array using d3.stratify ─────────────────────
+  let root;
+  try {
+    const stratify = d3.stratify()
+      .id(d => d.id)
+      .parentId(d => d.parentId || null);
+    root = stratify(members);
+  } catch (err) {
+    container.innerHTML =
+      `<p style="padding:40px;color:#c0392b">Tree error: ${err.message}</p>`;
+    return;
+  }
+
+  // ── Tree layout ────────────────────────────────────────────────────────────
   const treeLayout = d3.tree()
     .nodeSize([NODE_SPACING.x, NODE_SPACING.y])
     .separation((a, b) => a.parent === b.parent ? 1.2 : 1.6);
-
   treeLayout(root);
 
-  // ── Zoom & pan ──────────────────────────────────────────────────────────────
-  const zoom = d3.zoom()
+  // ── Zoom & pan ─────────────────────────────────────────────────────────────
+  zoom = d3.zoom()
     .scaleExtent([0.1, 3])
     .on('zoom', e => group.attr('transform', e.transform));
-
   svg.call(zoom);
 
-  // Center tree initially
   const w = container.clientWidth;
   const h = container.clientHeight;
   svg.call(zoom.transform, d3.zoomIdentity.translate(w / 2, 80).scale(0.8));
 
-  // ── Draw links ──────────────────────────────────────────────────────────────
+  // ── Links ──────────────────────────────────────────────────────────────────
   group.selectAll('.link')
     .data(root.links())
     .join('path')
     .attr('class', 'link')
-    .attr('d', d3.linkVertical()
-      .x(d => d.x)
-      .y(d => d.y)
-    );
+    .attr('d', d3.linkVertical().x(d => d.x).y(d => d.y));
 
-  // ── Draw nodes ──────────────────────────────────────────────────────────────
-  const nodes = group.selectAll('.node')
+  // ── Nodes ──────────────────────────────────────────────────────────────────
+  nodes = group.selectAll('.node')
     .data(root.descendants())
     .join('g')
     .attr('class', d => `node ${d.data.gender || 'unknown'}`)
     .attr('transform', d => `translate(${d.x},${d.y})`)
-    .on('click', (event, d) => showDetail(d.data));
+    .on('click', (event, d) => {
+      // Dispatch custom event — decouples detail panel from tree
+      document.dispatchEvent(
+        new CustomEvent('member-selected', { detail: d.data })
+      );
+    });
 
   nodes.append('circle').attr('r', NODE_RADIUS);
 
-  // Name label
   nodes.append('text')
     .attr('class', 'name-label')
     .attr('dy', NODE_RADIUS + 14)
     .text(d => showChinese && d.data.chinese ? d.data.chinese : d.data.name);
 
-  // Birth–death years
   nodes.append('text')
     .attr('class', 'year-label')
     .attr('dy', NODE_RADIUS + 26)
     .text(d => {
-      const b = d.data.birth  || '?';
+      const b  = d.data.birth || '?';
       const dd = d.data.death || '';
       return dd ? `${b}–${dd}` : b;
     });
 
-  // ── Controls ────────────────────────────────────────────────────────────────
-  document.getElementById('btn-zoom-in').onclick  = () => svg.transition().call(zoom.scaleBy, 1.3);
-  document.getElementById('btn-zoom-out').onclick = () => svg.transition().call(zoom.scaleBy, 0.77);
-  document.getElementById('btn-reset').onclick    = () =>
+  // ── Controls ───────────────────────────────────────────────────────────────
+  const btnZoomIn  = document.getElementById('btn-zoom-in');
+  const btnZoomOut = document.getElementById('btn-zoom-out');
+  const btnReset   = document.getElementById('btn-reset');
+  const btnLang    = document.getElementById('btn-toggle-lang');
+
+  if (btnZoomIn)  btnZoomIn.onclick  = () => svg.transition().call(zoom.scaleBy, 1.3);
+  if (btnZoomOut) btnZoomOut.onclick = () => svg.transition().call(zoom.scaleBy, 0.77);
+  if (btnReset)   btnReset.onclick   = () =>
     svg.transition().call(zoom.transform, d3.zoomIdentity.translate(w / 2, 80).scale(0.8));
 
-  document.getElementById('btn-toggle-lang').onclick = () => {
+  if (btnLang) btnLang.onclick = () => {
     showChinese = !showChinese;
-    nodes.selectAll('text.name-label')
-      .text(d => showChinese && d.data.chinese ? d.data.chinese : d.data.name);
+    if (nodes) {
+      nodes.selectAll('text.name-label')
+        .text(d => showChinese && d.data.chinese ? d.data.chinese : d.data.name);
+    }
   };
 
-  // ── Search ──────────────────────────────────────────────────────────────────
+  // ── Search ─────────────────────────────────────────────────────────────────
+  const searchBtn   = document.getElementById('search-btn');
+  const searchInput = document.getElementById('search-input');
+
   function doSearch() {
-    const q = document.getElementById('search-input').value.trim().toLowerCase();
-    nodes.classed('highlighted', false);
-    if (!q) return;
+    const q = (searchInput?.value || '').trim().toLowerCase();
+    if (nodes) nodes.classed('highlighted', false);
+    if (!q || !nodes) return;
 
     const matched = nodes.filter(d =>
       d.data.name.toLowerCase().includes(q) ||
       (d.data.chinese && d.data.chinese.includes(q))
     );
-
     matched.classed('highlighted', true);
 
-    // Pan to first match
     if (!matched.empty()) {
-      const d = matched.datum();
-      const currentTransform = d3.zoomTransform(svg.node());
-      const scale = currentTransform.k;
+      const d     = matched.datum();
+      const scale = d3.zoomTransform(svg.node()).k;
       svg.transition().duration(600).call(
         zoom.transform,
         d3.zoomIdentity
@@ -115,26 +142,35 @@ function init(data) {
     }
   }
 
-  document.getElementById('search-btn').onclick = doSearch;
-  document.getElementById('search-input').addEventListener('keydown', e => {
+  if (searchBtn)   searchBtn.onclick = doSearch;
+  if (searchInput) searchInput.addEventListener('keydown', e => {
     if (e.key === 'Enter') doSearch();
   });
 }
 
-// ── Detail panel ──────────────────────────────────────────────────────────────
-function showDetail(d) {
+/**
+ * Render the detail panel for a selected member.
+ * Called by app.js on 'member-selected' event.
+ * @param {object} member
+ * @param {string|null} role
+ */
+export function renderDetailPanel(member, role) {
   const panel   = document.getElementById('detail-panel');
   const content = document.getElementById('detail-content');
+  if (!panel || !content) return;
 
-  const gender  = d.gender === 'male' ? '♂ Male' : d.gender === 'female' ? '♀ Female' : '—';
-  const birth   = d.birth  || '—';
-  const death   = d.death  || 'Living';
-  const spouse  = d.spouse || '—';
-  const notes   = d.notes  || '—';
+  const gender = member.gender === 'male' ? '♂ Male'
+               : member.gender === 'female' ? '♀ Female' : '—';
+  const birth  = member.birth  || '—';
+  const death  = member.death  || 'Living';
+  const spouse = member.spouse || '—';
+  const notes  = member.notes  || '—';
+
+  const canEdit = role === 'editor' || role === 'admin';
 
   content.innerHTML = `
-    <h2>${d.name}</h2>
-    ${d.chinese ? `<div class="chinese-name">${d.chinese}</div>` : ''}
+    <h2>${member.name}</h2>
+    ${member.chinese ? `<div class="chinese-name">${member.chinese}</div>` : ''}
     <table>
       <tr><td>Gender</td><td>${gender}</td></tr>
       <tr><td>Born</td><td>${birth}</td></tr>
@@ -142,11 +178,13 @@ function showDetail(d) {
       <tr><td>Spouse</td><td>${spouse}</td></tr>
       <tr><td>Notes</td><td>${notes}</td></tr>
     </table>
+    ${canEdit ? `
+    <div class="detail-actions">
+      <button class="btn-action btn-add-child" data-id="${member.id}">➕ Add Child</button>
+      <button class="btn-action btn-edit"      data-id="${member.id}">✏️ Edit</button>
+      <button class="btn-action btn-delete"    data-id="${member.id}" data-name="${member.name}">🗑️ Delete</button>
+    </div>` : ''}
   `;
 
   panel.classList.remove('hidden');
 }
-
-document.getElementById('detail-close').onclick = () => {
-  document.getElementById('detail-panel').classList.add('hidden');
-};

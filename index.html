@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>李家族谱 |Lee Family Genealogy</title>
+  <title>李家族谱 | Lee Family Genealogy</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -12,19 +12,31 @@
   <header>
     <h1>🌳 李家族谱</h1>
     <p class="subtitle">Lee Family Genealogy Tree</p>
+
     <div class="controls">
-      <button id="btn-zoom-in">＋ Zoom In</button>
-      <button id="btn-zoom-out">－ Zoom Out</button>
+      <button id="btn-zoom-in">＋</button>
+      <button id="btn-zoom-out">－</button>
       <button id="btn-reset">⟳ Reset</button>
       <button id="btn-toggle-lang">中 / EN</button>
     </div>
+
+    <div class="auth-controls">
+      <span id="user-display-name" class="hidden"></span>
+      <button id="btn-manage-users" class="hidden btn-manage">👥 Manage Users</button>
+      <button id="btn-sign-out"     class="hidden btn-signout">Sign Out</button>
+      <button id="btn-sign-in"      class="btn-signin">Sign In with Google</button>
+    </div>
   </header>
+
+  <!-- Error banner -->
+  <div id="error-banner" class="hidden">
+    <span id="error-banner-text"></span>
+    <button id="error-banner-close">✕</button>
+  </div>
 
   <!-- Tree container -->
   <div id="tree-container">
-    <svg id="tree-svg">
-      <g id="tree-group"></g>
-    </svg>
+    <svg id="tree-svg"><g id="tree-group"></g></svg>
   </div>
 
   <!-- Member detail panel -->
@@ -33,13 +45,84 @@
     <div id="detail-content"></div>
   </div>
 
+  <!-- Edit History Panel (top-right, signed-in only) -->
+  <div id="history-panel" class="hidden">
+    <div id="history-header">
+      <span>📋 Recent Edits</span>
+      <button id="history-toggle">▲</button>
+    </div>
+    <ul id="history-list"></ul>
+  </div>
+
+  <!-- Edit Form Modal -->
+  <div id="edit-modal" class="hidden modal-overlay">
+    <div class="modal-card">
+      <h3 id="modal-title">Add Member</h3>
+      <form id="member-form">
+        <input type="hidden" id="f-id" />
+        <input type="hidden" id="f-parent-id" />
+
+        <label>English Name *
+          <input type="text" id="f-name" required placeholder="e.g. Lee Ah Kow" />
+          <span id="f-name-error" class="validation-error"></span>
+        </label>
+        <label>Chinese Name
+          <input type="text" id="f-chinese" placeholder="e.g. 李亚狗" />
+        </label>
+        <label>Gender
+          <select id="f-gender">
+            <option value="male">Male 男</option>
+            <option value="female">Female 女</option>
+            <option value="unknown">Unknown</option>
+          </select>
+        </label>
+        <label>Birth Year / Date
+          <input type="text" id="f-birth" placeholder="e.g. 1950 or 1950/01/01" />
+        </label>
+        <label>Death Year / Date
+          <input type="text" id="f-death" placeholder="Leave blank if living" />
+        </label>
+        <label>Spouse
+          <input type="text" id="f-spouse" placeholder="Spouse name" />
+        </label>
+        <label>Notes
+          <textarea id="f-notes" rows="2" placeholder="Any notes..."></textarea>
+        </label>
+        <div class="modal-btns">
+          <button type="submit" class="btn-save">💾 Save</button>
+          <button type="button" id="modal-cancel" class="btn-cancel">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- User Management Modal -->
+  <div id="user-mgmt-modal" class="hidden modal-overlay">
+    <div class="modal-card modal-card-wide">
+      <div class="modal-header">
+        <h3>👥 Manage Users</h3>
+        <button id="user-mgmt-close">✕</button>
+      </div>
+
+      <form id="invite-form" class="invite-form">
+        <input type="email" id="invite-email" placeholder="Invite by email address" required />
+        <button type="submit" class="btn-save">Invite as Editor</button>
+      </form>
+
+      <div id="user-list-container"></div>
+    </div>
+  </div>
+
   <!-- Search -->
   <div id="search-bar">
     <input type="text" id="search-input" placeholder="Search name..." />
     <button id="search-btn">🔍</button>
   </div>
 
+  <!-- D3.js (non-module, loaded first) -->
   <script src="https://d3js.org/d3.v7.min.js"></script>
-  <script src="js/tree.js"></script>
+  <!-- App entry point (ES module) -->
+  <script type="module" src="js/app.js"></script>
+
 </body>
 </html>
