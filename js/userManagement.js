@@ -162,7 +162,6 @@ export function initUserManagement() {
 
       try {
         await db.createUserRecord({
-          uid:         email, // keyed by email until first sign-in
           email,
           displayName: email,
           role:        'editor',
