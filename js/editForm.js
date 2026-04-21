@@ -129,15 +129,18 @@ export function initEditForm(onSaved) {
         });
       } else {
         // Add new member
-        const newMember = { ...member, id: crypto.randomUUID() };
-        await db.addMember(newMember);
+        const memberData = { ...member };
         
-        // If this is a spouse, update both members to reference each other
+        // If this is a spouse, add the spouse relationship to the member data before saving
         if (spouseOf) {
-          // Update the new spouse to reference the original member
-          await db.updateMember(newMember.id, { ...newMember, spouse: spouseOf });
-          // Update the original member to reference the new spouse
-          await db.updateMember(spouseOf, { spouse: newMember.id });
+          memberData.spouse = spouseOf;
+        }
+        
+        const newMemberId = await db.addMember(memberData);
+        
+        // If this is a spouse, update the original member to reference the new spouse
+        if (spouseOf) {
+          await db.updateMember(spouseOf, { spouse: newMemberId });
         }
         
         await db.addHistoryEntry({

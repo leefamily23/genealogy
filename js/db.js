@@ -27,14 +27,37 @@ export async function getAllMembers() {
 }
 
 /**
+ * Get the next available numeric ID for a new family member.
+ * @returns {Promise<string>}
+ */
+async function getNextMemberId() {
+  try {
+    const snap = await getDocs(collection(db, 'family'));
+    const existingIds = snap.docs.map(d => d.id);
+    
+    // Filter numeric IDs and find the highest one
+    const numericIds = existingIds
+      .filter(id => /^\d+$/.test(id))
+      .map(id => parseInt(id, 10));
+    
+    const maxId = numericIds.length > 0 ? Math.max(...numericIds) : 0;
+    return String(maxId + 1);
+  } catch (err) {
+    // Fallback to timestamp-based ID if there's an error
+    return String(Date.now());
+  }
+}
+
+/**
  * Add a new family member. Returns the new document id.
  * @param {object} member
  * @returns {Promise<string>}
  */
 export async function addMember(member) {
   try {
-    const ref = await addDoc(collection(db, 'family'), member);
-    return ref.id;
+    const newId = await getNextMemberId();
+    await setDoc(doc(db, 'family', newId), member);
+    return newId;
   } catch (err) {
     dispatchError(`Save failed: ${err.message}. Your changes were not applied.`);
     throw err;
