@@ -1,20 +1,88 @@
 {
   "id": "1",
-  "name": "Lee Tam Sheng",
+  "name": "Lee Tham Seng",
   "chinese": "李谭胜",
-  "birth": "1900",
-  "death": "1970",
+  "birth": "1925/12/12",
+  "death": "1989/01/13",
   "gender": "male",
-  "spouse": "Spouse Name",
-  "notes": "Founder of the family",
+  "spouse": "曾秋梅",
+  "notes": "",
   "children": [
     {
       "id": "2",
-      "name": "Son One",
-      "chinese": "长子",
+      "name": "Lee Yoke Yee",
+      "chinese": "李玉意",
+      "birth": "Unknown",
+      "death": "",
+      "gender": "female",
+      "spouse": "郭振隆",
+      "notes": "长女",
+      "children": [
+        {
+          "id": "4",
+          "name": "Grandson One",
+          "chinese": "长孙",
+          "birth": "1950",
+          "death": "",
+          "gender": "male",
+          "spouse": "Wife A",
+          "notes": "",
+          "children": []
+        },
+        {
+          "id": "5",
+          "name": "Granddaughter One",
+          "chinese": "长孙女",
+          "birth": "1953",
+          "death": "",
+          "gender": "female",
+          "spouse": "",
+          "notes": "",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "name": "Lee Chee Ting",
+      "chinese": "李誌平",
+      "birth": "",
+      "death": "",
+      "gender": "male",
+      "spouse": "梁瑞香",
+      "notes": "",
+      "children": [
+        {
+          "id": "4",
+          "name": "Grandson One",
+          "chinese": "长孙",
+          "birth": "1950",
+          "death": "",
+          "gender": "male",
+          "spouse": "Wife A",
+          "notes": "",
+          "children": []
+        },
+        {
+          "id": "5",
+          "name": "Granddaughter One",
+          "chinese": "长孙女",
+          "birth": "1953",
+          "death": "",
+          "gender": "female",
+          "spouse": "",
+          "notes": "",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "name": "Second Aunty",
+      "chinese": "二姑",
       "birth": "1925",
       "death": "1995",
-      "gender": "male",
+      "gender": "female",
       "spouse": "Wife One",
       "notes": "",
       "children": [
@@ -43,11 +111,91 @@
       ]
     },
     {
-      "id": "3",
-      "name": "Son Two",
-      "chinese": "次子",
+      "id": "5",
+      "name": "Third Aunty",
+      "chinese": "三姑",
+      "birth": "1925",
+      "death": "1995",
+      "gender": "female",
+      "spouse": "Wife One",
+      "notes": "",
+      "children": [
+        {
+          "id": "4",
+          "name": "Grandson One",
+          "chinese": "长孙",
+          "birth": "1950",
+          "death": "",
+          "gender": "male",
+          "spouse": "Wife A",
+          "notes": "",
+          "children": []
+        },
+        {
+          "id": "5",
+          "name": "Granddaughter One",
+          "chinese": "长孙女",
+          "birth": "1953",
+          "death": "",
+          "gender": "female",
+          "spouse": "",
+          "notes": "",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "6",
+      "name": "Lee Yong Fang (Gary)",
+      "chinese": "李永方",
       "birth": "1928",
-      "death": "2000",
+      "death": "",
+      "gender": "male",
+      "spouse": "Wife Two",
+      "notes": "",
+      "children": [
+        {
+          "id": "6",
+          "name": "Grandson Two",
+          "chinese": "次孙",
+          "birth": "1955",
+          "death": "",
+          "gender": "male",
+          "spouse": "",
+          "notes": "",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "7",
+      "name": "Lee Foh Chin",
+      "chinese": "李和清",
+      "birth": "1928",
+      "death": "",
+      "gender": "male",
+      "spouse": "Wife Two",
+      "notes": "",
+      "children": [
+        {
+          "id": "6",
+          "name": "Grandson Two",
+          "chinese": "次孙",
+          "birth": "1955",
+          "death": "",
+          "gender": "male",
+          "spouse": "",
+          "notes": "",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "8",
+      "name": "Lee Foh Lean",
+      "chinese": "李和粦",
+      "birth": "1967",
+      "death": "",
       "gender": "male",
       "spouse": "Wife Two",
       "notes": "",
