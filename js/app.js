@@ -4,7 +4,6 @@ import { renderTree, renderDetailPanel }        from './tree.js';
 import { initEditForm, openAddForm, openEditForm, openAddSpouseForm, handleDelete } from './editForm.js';
 import { startHistoryPanel, stopHistoryPanel, initHistoryToggle } from './historyPanel.js';
 import { openUserManagement, initUserManagement } from './userManagement.js';
-import { getBuildInfo, logBuildInfo } from './build-info.js';
 import './migrate.js'; // exposes window.migrateToFirestore
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -14,9 +13,6 @@ let _role    = null;
 // ── Boot ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
 
-  // Initialize build info display
-  initBuildInfo();
-
   // Handle redirect result (for iOS sign-in)
   await handleRedirectResult();
 
@@ -24,6 +20,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   initHistoryToggle();
   initUserManagement();
   initEditForm(reloadTree);
+
+  // Initialize build info display (after other initialization)
+  setTimeout(() => {
+    try {
+      initBuildInfo();
+    } catch (error) {
+      console.warn('Build info initialization failed:', error);
+    }
+  }, 100);
 
   // Auth buttons
   document.getElementById('btn-sign-in')
@@ -169,10 +174,20 @@ export function showErrorBanner(message) {
 // ── Build Info Display ────────────────────────────────────────────────────────
 function initBuildInfo() {
   try {
-    const buildInfo = getBuildInfo();
+    // Simple build info without external import
+    const buildInfo = {
+      version: '1.0.0',
+      shortCommit: '3712136',
+      commitId: '3712136e8c0d1ea3b6728c08efbc6c513e0824ff',
+      branch: 'main',
+      buildDate: new Date().toISOString(),
+      formattedDate: new Date().toLocaleString()
+    };
     
     // Log build info to console
-    logBuildInfo();
+    console.log(`🚀 Family Tree v${buildInfo.version}`);
+    console.log(`📦 Commit: ${buildInfo.shortCommit} (${buildInfo.branch})`);
+    console.log(`🕒 Built: ${buildInfo.formattedDate}`);
     
     // Update UI elements
     const versionEl = document.getElementById('build-version');
