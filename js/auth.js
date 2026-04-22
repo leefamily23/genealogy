@@ -22,12 +22,19 @@ let _currentUser = null;
 export async function signIn() {
   try {
     const provider = new GoogleAuthProvider();
-    // Use popup instead of redirect for more reliable sign-in
-    const { signInWithPopup } = await import(
-      'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js'
-    );
-    await signInWithPopup(auth, provider);
-    // Auth state change will handle the rest
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      const { signInWithRedirect } = await import(
+        'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js'
+      );
+      await signInWithRedirect(auth, provider);
+    } else {
+      const { signInWithPopup } = await import(
+        'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js'
+      );
+      await signInWithPopup(auth, provider);
+    }
   } catch (err) {
     if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
       showAuthError(`Sign-in failed: ${err.message}`);
