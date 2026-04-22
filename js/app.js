@@ -5,6 +5,7 @@ import { initEditForm, openAddForm, openEditForm, openAddSpouseForm, openAddForm
 import { startHistoryPanel, stopHistoryPanel, initHistoryToggle } from './historyPanel.js';
 import { openUserManagement, initUserManagement } from './userManagement.js';
 import { applyTranslations } from './translations.js';
+import { initImageViewer } from './imageViewer.js';
 import './migrate.js'; // exposes window.migrateToFirestore
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -23,6 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initHistoryToggle();
   initUserManagement();
   initEditForm(reloadTree);
+  initImageViewer();
   
   // Apply initial translations (Chinese by default)
   applyTranslations(_currentLanguage);

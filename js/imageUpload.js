@@ -76,11 +76,11 @@ function compressImage(file, maxWidth = 400, maxHeight = 400) {
 }
 
 /**
- * Upload image to Firebase Storage
+ * Upload image (convert to base64 data URL for storage in Firestore)
  * @param {string} memberId - Member ID for the image
  * @param {File} file - Image file to upload
  * @param {function} onProgress - Progress callback (optional)
- * @returns {Promise<string>} Download URL of uploaded image
+ * @returns {Promise<string>} Base64 data URL of the image
  */
 export async function uploadMemberImage(memberId, file, onProgress = null) {
   // Validate file
@@ -90,89 +90,75 @@ export async function uploadMemberImage(memberId, file, onProgress = null) {
   }
   
   try {
-    // Compress image before upload
-    const compressedBlob = await compressImage(file);
-    
-    // Create storage reference
-    const imageRef = ref(storage, `member-photos/${memberId}.jpg`);
-    
-    // Upload with progress tracking
+    // Compress image
     if (onProgress) {
-      onProgress(0);
+      onProgress(30);
     }
     
-    const uploadResult = await uploadBytes(imageRef, compressedBlob);
+    const compressedBlob = await compressImage(file);
+    
+    if (onProgress) {
+      onProgress(60);
+    }
+    
+    // Convert to base64 data URL
+    const dataURL = await blobToDataURL(compressedBlob);
     
     if (onProgress) {
       onProgress(100);
     }
     
-    // Get download URL
-    const downloadURL = await getDownloadURL(uploadResult.ref);
-    
-    return downloadURL;
+    return dataURL;
   } catch (error) {
-    console.error('Image upload failed:', error);
-    throw new Error(`图片上传失败: ${error.message}`);
+    console.error('Image processing failed:', error);
+    throw new Error(`图片处理失败: ${error.message}`);
   }
 }
 
 /**
- * Delete member image from Firebase Storage
+ * Convert blob to base64 data URL
+ * @param {Blob} blob - Image blob
+ * @returns {Promise<string>} Base64 data URL
+ */
+function blobToDataURL(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+/**
+ * Delete member image (no-op for base64 storage)
  * @param {string} memberId - Member ID
  * @returns {Promise<void>}
  */
 export async function deleteMemberImage(memberId) {
-  try {
-    const imageRef = ref(storage, `member-photos/${memberId}.jpg`);
-    await deleteObject(imageRef);
-  } catch (error) {
-    console.warn(`Could not delete image for member ${memberId}:`, error.message);
-  }
+  // Images are stored as base64 in Firestore, so no separate deletion needed
+  console.log(`Image data will be removed with member document: ${memberId}`);
 }
 
 /**
- * Get member image URL (construct from member ID)
+ * Get member image URL (returns the base64 data URL directly)
  * @param {string} memberId - Member ID
  * @returns {string} Image URL or null
  */
 export function getMemberImageURL(memberId) {
-  if (!memberId) return null;
-  
-  // Return a more reliable URL construction
-  try {
-    const imageRef = ref(storage, `member-photos/${memberId}.jpg`);
-    // We'll use getDownloadURL when we actually need the URL
-    return `https://firebasestorage.googleapis.com/v0/b/leefamilygenealogy.firebasestorage.app/o/member-photos%2F${encodeURIComponent(memberId)}.jpg?alt=media`;
-  } catch (error) {
-    console.warn('Error constructing image URL:', error);
-    return null;
-  }
+  // For base64 storage, the URL is stored directly in the member document
+  // This function is kept for compatibility but not used
+  return null;
 }
 
 /**
- * Check if member has an image
+ * Check if member has an image (for base64 storage, check member document)
  * @param {string} memberId - Member ID
  * @returns {Promise<boolean>}
  */
 export async function memberHasImage(memberId) {
-  try {
-    // Add timeout to prevent hanging
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Timeout')), 5000)
-    );
-    
-    const checkPromise = (async () => {
-      const imageRef = ref(storage, `member-photos/${memberId}.jpg`);
-      await getDownloadURL(imageRef);
-      return true;
-    })();
-    
-    await Promise.race([checkPromise, timeoutPromise]);
-    return true;
-  } catch (error) {
-    return false;
-  }
+  // For base64 storage, we check the member document directly
+  // This is handled by the calling code
+  return false;
 }
 
 /**
@@ -252,7 +238,7 @@ function previewImage(file, preview) {
   
   const reader = new FileReader();
   reader.onload = (e) => {
-    preview.innerHTML = `<img src="${e.target.result}" alt="预览" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+    preview.innerHTML = `<img src="${e.target.result}" alt="预览" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">`;
     preview.style.display = 'block';
   };
   reader.readAsDataURL(file);
@@ -265,26 +251,9 @@ function previewImage(file, preview) {
  * @param {HTMLElement} removeBtn - Remove button
  */
 async function loadExistingImage(memberId, preview, removeBtn) {
-  if (!preview || !memberId) return;
-  
-  try {
-    // Add timeout to prevent hanging
-    const hasImage = await Promise.race([
-      memberHasImage(memberId),
-      new Promise(resolve => setTimeout(() => resolve(false), 3000))
-    ]);
-    
-    if (hasImage) {
-      const imageURL = getMemberImageURL(memberId);
-      if (imageURL) {
-        preview.innerHTML = `<img src="${imageURL}" alt="当前照片" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" onerror="this.parentElement.style.display='none'">`;
-        preview.style.display = 'block';
-        if (removeBtn) removeBtn.style.display = 'inline-block';
-      }
-    }
-  } catch (error) {
-    console.warn('Could not load existing image:', error);
-  }
+  // For base64 storage, the image URL is loaded from the member document
+  // This will be handled by the form initialization in editForm.js
+  // This function is kept for compatibility
 }
 
 /**

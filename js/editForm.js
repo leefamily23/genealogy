@@ -229,11 +229,25 @@ export function openEditForm(member) {
   }
   
   // Initialize image upload UI (with error handling)
-  console.log('🔧 About to initialize image upload UI for openEditForm');
   try {
     initImageUploadUI('member-form', member.id);
+    
+    // Load existing image if available
+    if (member.imageURL) {
+      const form = document.getElementById('member-form');
+      const preview = form.querySelector('.image-preview');
+      const removeBtn = form.querySelector('.image-remove-btn');
+      
+      if (preview) {
+        preview.innerHTML = `<img src="${member.imageURL}" alt="当前照片" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">`;
+        preview.style.display = 'block';
+      }
+      if (removeBtn) {
+        removeBtn.style.display = 'inline-block';
+      }
+    }
   } catch (error) {
-    console.error('❌ Image upload UI initialization failed:', error);
+    console.error('Image upload UI initialization failed:', error);
   }
   
   document.getElementById('edit-modal').classList.remove('hidden');
@@ -266,6 +280,17 @@ function resetForm() {
   if (form) form.reset();
   const errEl = document.getElementById('f-name-error');
   if (errEl) errEl.textContent = '';
+  
+  // Clear image preview
+  const preview = form?.querySelector('.image-preview');
+  const removeBtn = form?.querySelector('.image-remove-btn');
+  if (preview) {
+    preview.innerHTML = '';
+    preview.style.display = 'none';
+  }
+  if (removeBtn) {
+    removeBtn.style.display = 'none';
+  }
 }
 
 // ── Form submit handler ───────────────────────────────────────────────────────
@@ -332,6 +357,16 @@ export function initEditForm(onSaved) {
             } catch (imageError) {
               console.error('Image upload failed:', imageError);
               alert(`成员信息已保存，但照片上传失败: ${imageError.message}`);
+            }
+          } else {
+            // Check if image was removed (preview is hidden and no file selected)
+            const form = document.getElementById('member-form');
+            const preview = form?.querySelector('.image-preview');
+            const isPreviewHidden = preview && preview.style.display === 'none';
+            
+            if (isPreviewHidden) {
+              // User removed the image - set to empty string
+              finalMemberData.imageURL = '';
             }
           }
         } catch (error) {

@@ -1,3 +1,5 @@
+import { openImageViewer } from './imageViewer.js';
+
 // ── Config ────────────────────────────────────────────────────────────────────
 const NODE_WIDTH = 100;
 const NODE_HEIGHT = 140;
@@ -194,43 +196,62 @@ export function renderTree(members, role) {
       .attr('stroke', '#fff')
       .attr('stroke-width', 2);
     
-    // Photo circle background (white circle for photo)
+    // Photo rectangle background (white rectangle for photo)
     const photoY = -NODE_HEIGHT/2 + 35;
-    node.append('circle')
-      .attr('cx', 0)
-      .attr('cy', photoY)
-      .attr('r', PHOTO_RADIUS + 2)
+    const photoWidth = 50;
+    const photoHeight = 50;
+    
+    node.append('rect')
+      .attr('x', -photoWidth/2)
+      .attr('y', photoY - photoHeight/2)
+      .attr('width', photoWidth)
+      .attr('height', photoHeight)
+      .attr('rx', 6)
+      .attr('ry', 6)
       .attr('fill', '#fff')
       .attr('stroke', 'none');
     
-    // Add profile image if available
-    if (member.imageURL && member.imageURL.trim() !== '') {
+    // Add profile image if available - CHECK EXPLICITLY FOR THIS MEMBER'S IMAGE
+    const hasImage = member.imageURL && member.imageURL.trim() !== '' && member.imageURL.startsWith('data:image');
+    
+    if (hasImage) {
       try {
         const defs = svg.select('defs').empty() ? svg.append('defs') : svg.select('defs');
-        const clipId = `clip-${member.id}`;
+        const clipId = `clip-main-${member.id}`;
         
-        if (defs.select(`#${clipId}`).empty()) {
-          defs.append('clipPath')
-            .attr('id', clipId)
-            .append('circle')
-            .attr('cx', 0)
-            .attr('cy', photoY)
-            .attr('r', PHOTO_RADIUS);
-        }
+        // Remove old clip path if exists
+        defs.select(`#${clipId}`).remove();
+        
+        // Create new clip path (rectangle with rounded corners)
+        defs.append('clipPath')
+          .attr('id', clipId)
+          .append('rect')
+          .attr('x', -photoWidth/2)
+          .attr('y', photoY - photoHeight/2)
+          .attr('width', photoWidth)
+          .attr('height', photoHeight)
+          .attr('rx', 6)
+          .attr('ry', 6);
         
         node.append('image')
-          .attr('x', -PHOTO_RADIUS)
-          .attr('y', photoY - PHOTO_RADIUS)
-          .attr('width', PHOTO_RADIUS * 2)
-          .attr('height', PHOTO_RADIUS * 2)
+          .attr('x', -photoWidth/2)
+          .attr('y', photoY - photoHeight/2)
+          .attr('width', photoWidth)
+          .attr('height', photoHeight)
           .attr('clip-path', `url(#${clipId})`)
           .attr('href', member.imageURL)
           .style('opacity', 0)
+          .style('cursor', 'pointer')
           .on('load', function() {
             d3.select(this).transition().duration(300).style('opacity', 1);
           })
           .on('error', function() {
+            console.warn(`Image failed to load for ${member.name}`);
             d3.select(this).remove();
+          })
+          .on('click', function(event) {
+            event.stopPropagation(); // Prevent node click event
+            openImageViewer(member.imageURL, member.name);
           });
       } catch (error) {
         console.warn('Error adding image to card:', error);
@@ -410,43 +431,62 @@ export function renderTree(members, role) {
       .attr('stroke', '#fff')
       .attr('stroke-width', 2);
     
-    // Photo circle background (white circle for photo)
+    // Photo rectangle background (white rectangle for photo)
     const photoY = -NODE_HEIGHT/2 + 35;
-    node.append('circle')
-      .attr('cx', 0)
-      .attr('cy', photoY)
-      .attr('r', PHOTO_RADIUS + 2)
+    const photoWidth = 50;
+    const photoHeight = 50;
+    
+    node.append('rect')
+      .attr('x', -photoWidth/2)
+      .attr('y', photoY - photoHeight/2)
+      .attr('width', photoWidth)
+      .attr('height', photoHeight)
+      .attr('rx', 6)
+      .attr('ry', 6)
       .attr('fill', '#fff')
       .attr('stroke', 'none');
     
-    // Add profile image if available
-    if (member.imageURL && member.imageURL.trim() !== '') {
+    // Add profile image if available - CHECK EXPLICITLY FOR THIS MEMBER'S IMAGE
+    const hasImage = member.imageURL && member.imageURL.trim() !== '' && member.imageURL.startsWith('data:image');
+    
+    if (hasImage) {
       try {
         const defs = svg.select('defs').empty() ? svg.append('defs') : svg.select('defs');
         const clipId = `clip-spouse-${member.id}`;
         
-        if (defs.select(`#${clipId}`).empty()) {
-          defs.append('clipPath')
-            .attr('id', clipId)
-            .append('circle')
-            .attr('cx', 0)
-            .attr('cy', photoY)
-            .attr('r', PHOTO_RADIUS);
-        }
+        // Remove old clip path if exists
+        defs.select(`#${clipId}`).remove();
+        
+        // Create new clip path (rectangle with rounded corners)
+        defs.append('clipPath')
+          .attr('id', clipId)
+          .append('rect')
+          .attr('x', -photoWidth/2)
+          .attr('y', photoY - photoHeight/2)
+          .attr('width', photoWidth)
+          .attr('height', photoHeight)
+          .attr('rx', 6)
+          .attr('ry', 6);
         
         node.append('image')
-          .attr('x', -PHOTO_RADIUS)
-          .attr('y', photoY - PHOTO_RADIUS)
-          .attr('width', PHOTO_RADIUS * 2)
-          .attr('height', PHOTO_RADIUS * 2)
+          .attr('x', -photoWidth/2)
+          .attr('y', photoY - photoHeight/2)
+          .attr('width', photoWidth)
+          .attr('height', photoHeight)
           .attr('clip-path', `url(#${clipId})`)
           .attr('href', member.imageURL)
           .style('opacity', 0)
+          .style('cursor', 'pointer')
           .on('load', function() {
             d3.select(this).transition().duration(300).style('opacity', 1);
           })
           .on('error', function() {
+            console.warn(`Spouse image failed to load for ${member.name}`);
             d3.select(this).remove();
+          })
+          .on('click', function(event) {
+            event.stopPropagation(); // Prevent node click event
+            openImageViewer(member.imageURL, member.name);
           });
       } catch (error) {
         console.warn('Error adding image to spouse card:', error);
@@ -603,7 +643,8 @@ export function renderDetailPanel(member, role, allMembers = []) {
       ${member.imageURL ? `
         <div style="flex-shrink: 0;">
           <img src="${member.imageURL}" alt="${member.name}" 
-               style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #8b1a1a; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"
+               class="detail-panel-image"
+               style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover; border: 3px solid #8b1a1a; box-shadow: 0 2px 8px rgba(0,0,0,0.2); cursor: pointer;"
                onerror="this.style.display='none'">
         </div>
       ` : ''}
@@ -628,6 +669,16 @@ export function renderDetailPanel(member, role, allMembers = []) {
       ${!hasChildren ? `<button class="btn-action btn-delete" data-id="${member.id}" data-name="${member.name}">${labels.delete}</button>` : ''}
     </div>` : ''}
   `;
+  
+  // Add click handler for detail panel image
+  if (member.imageURL) {
+    const detailImage = content.querySelector('.detail-panel-image');
+    if (detailImage) {
+      detailImage.addEventListener('click', () => {
+        openImageViewer(member.imageURL, member.name);
+      });
+    }
+  }
 }
 
 /**
