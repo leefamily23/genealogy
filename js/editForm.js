@@ -249,6 +249,7 @@ export function openEditForm(member) {
   document.getElementById('f-birth').value     = member.birth    || '';
   document.getElementById('f-death').value     = member.death    || '';
   document.getElementById('f-hometown').value  = member.hometown || '';
+  document.getElementById('f-nationality').value = member.nationality || '';
   document.getElementById('f-notes').value     = member.notes    || '';
   
   // Set Lee family member checkbox
@@ -363,6 +364,7 @@ export function initEditForm(onSaved) {
       death:    document.getElementById('f-death').value.trim(),
       notes:    document.getElementById('f-notes').value.trim(),
       hometown: document.getElementById('f-hometown')?.value.trim() || '',
+      nationality: document.getElementById('f-nationality')?.value.trim() || '',
       parentId: parentId || null,
       isLeeFamilyMember: isLeeFamilyMember,
     };

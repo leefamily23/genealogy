@@ -152,10 +152,15 @@
           </label>
         </div>
 
-        <!-- Row 4: Hometown -->
-        <label>籍贯 (Hometown)
-          <input type="text" id="f-hometown" placeholder="e.g. 福建, 广东, 福州" />
-        </label>
+        <!-- Row 4: Hometown + Nationality -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
+          <label>籍贯 (Hometown)
+            <input type="text" id="f-hometown" placeholder="e.g. 福建, 广东" />
+          </label>
+          <label>国籍 (Nationality)
+            <input type="text" id="f-nationality" placeholder="e.g. 马来西亚, 中国" />
+          </label>
+        </div>
 
         <label>备注
           <textarea id="f-notes" rows="2" placeholder="任何备注..."></textarea>

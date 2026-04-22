@@ -9,6 +9,44 @@ let   _currentLanguage = 'zh'; // 'zh' or 'en'
 
 // ── Helper Functions ──────────────────────────────────────────────────────────
 /**
+ * Convert country name to ISO 2-letter country code for flagcdn.com
+ */
+function countryCode(nationality) {
+  if (!nationality) return null;
+  const map = {
+    '马来西亚': 'my', 'malaysia': 'my',
+    '中国': 'cn', 'china': 'cn',
+    '新加坡': 'sg', 'singapore': 'sg',
+    '澳大利亚': 'au', 'australia': 'au',
+    '美国': 'us', 'usa': 'us', 'united states': 'us',
+    '英国': 'gb', 'uk': 'gb', 'united kingdom': 'gb',
+    '加拿大': 'ca', 'canada': 'ca',
+    '日本': 'jp', 'japan': 'jp',
+    '台湾': 'tw', 'taiwan': 'tw',
+    '香港': 'hk', 'hong kong': 'hk',
+    '印尼': 'id', 'indonesia': 'id',
+    '泰国': 'th', 'thailand': 'th',
+    '菲律宾': 'ph', 'philippines': 'ph',
+    '文莱': 'bn', 'brunei': 'bn',
+    '新西兰': 'nz', 'new zealand': 'nz',
+  };
+  return map[nationality.toLowerCase()] || map[nationality] || null;
+}
+
+/**
+ * Convert country name to flag emoji (for detail panel HTML)
+ */
+function countryFlag(nationality) {
+  if (!nationality) return '';
+  const code = countryCode(nationality);
+  if (!code) return '🌏';
+  // Convert ISO code to flag emoji using regional indicator symbols
+  return code.toUpperCase().split('').map(c =>
+    String.fromCodePoint(c.charCodeAt(0) + 127397)
+  ).join('');
+}
+
+/**
  * Get card background color based on gender
  * @param {string} gender - 'male', 'female', or 'unknown'
  * @returns {string} CSS color
@@ -292,21 +330,39 @@ export function renderTree(members, role) {
       .attr('font-weight', 'bold')
       .attr('fill', '#fff')
       .text(member.name);
-    
-    // Birth/Death years (at bottom of card)
-    const birth = member.birth || '?';
-    const death = member.death || '';
-    const yearText = death ? `${birth}–${death}` : birth;
-    
-    const yearY = NODE_HEIGHT/2 - 12;
-    node.append('text')
-      .attr('x', 0)
-      .attr('y', yearY)
-      .attr('text-anchor', 'middle')
-      .attr('font-size', '9px')
-      .attr('fill', '#fff')
-      .attr('opacity', 0.9)
-      .text(yearText);
+
+    // Nickname below name
+    const nicknameY = nameY + 14;
+    if (member.chinese) {
+      node.append('text')
+        .attr('x', 0)
+        .attr('y', nicknameY)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '9px')
+        .attr('fill', 'rgba(255,255,255,0.85)')
+        .text(member.chinese);
+    }
+
+    // Flag image at bottom
+    const code = countryCode(member.nationality);
+    if (code) {
+      const flagW = 24, flagH = 16;
+      node.append('image')
+        .attr('x', -flagW/2)
+        .attr('y', NODE_HEIGHT/2 - flagH - 6)
+        .attr('width', flagW)
+        .attr('height', flagH)
+        .attr('href', `https://flagcdn.com/w40/${code}.png`)
+        .attr('clip-path', `url(#flag-clip-${member.id})`)
+        .style('pointer-events', 'none');
+      // Rounded clip for flag
+      const defs2 = svg.select('defs').empty() ? svg.append('defs') : svg.select('defs');
+      defs2.select(`#flag-clip-${member.id}`).remove();
+      defs2.append('clipPath').attr('id', `flag-clip-${member.id}`)
+        .append('rect')
+        .attr('x', -flagW/2).attr('y', NODE_HEIGHT/2 - flagH - 6)
+        .attr('width', flagW).attr('height', flagH).attr('rx', 3);
+    }
   });
 
   // ── Add spouses with STRAIGHT LINES ───────────────────────────────────────
@@ -526,21 +582,38 @@ export function renderTree(members, role) {
       .attr('font-weight', 'bold')
       .attr('fill', '#fff')
       .text(member.name);
-    
-    // Birth/Death years (at bottom of card)
-    const birth = member.birth || '?';
-    const death = member.death || '';
-    const yearText = death ? `${birth}–${death}` : birth;
-    
-    const yearY = NODE_HEIGHT/2 - 12;
-    node.append('text')
-      .attr('x', 0)
-      .attr('y', yearY)
-      .attr('text-anchor', 'middle')
-      .attr('font-size', '9px')
-      .attr('fill', '#fff')
-      .attr('opacity', 0.9)
-      .text(yearText);
+
+    // Nickname below name
+    const nicknameY = nameY + 14;
+    if (member.chinese) {
+      node.append('text')
+        .attr('x', 0)
+        .attr('y', nicknameY)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '9px')
+        .attr('fill', 'rgba(255,255,255,0.85)')
+        .text(member.chinese);
+    }
+
+    // Flag image at bottom
+    const code = countryCode(member.nationality);
+    if (code) {
+      const flagW = 24, flagH = 16;
+      node.append('image')
+        .attr('x', -flagW/2)
+        .attr('y', NODE_HEIGHT/2 - flagH - 6)
+        .attr('width', flagW)
+        .attr('height', flagH)
+        .attr('href', `https://flagcdn.com/w40/${code}.png`)
+        .attr('clip-path', `url(#flag-clip-sp-${member.id})`)
+        .style('pointer-events', 'none');
+      const defs2 = svg.select('defs').empty() ? svg.append('defs') : svg.select('defs');
+      defs2.select(`#flag-clip-sp-${member.id}`).remove();
+      defs2.append('clipPath').attr('id', `flag-clip-sp-${member.id}`)
+        .append('rect')
+        .attr('x', -flagW/2).attr('y', NODE_HEIGHT/2 - flagH - 6)
+        .attr('width', flagW).attr('height', flagH).attr('rx', 3);
+    }
   });
 
   // Update nodes selection to include spouses
@@ -576,6 +649,7 @@ export function renderDetailPanel(member, role, allMembers = []) {
     parent: '父',
     otherParent: '母',
     hometown: '籍贯',
+    nationality: '国籍',
     notes: '备注',
     addChild: '➕ 添加子女',
     addParent: '⬆️ 添加父母',
@@ -677,6 +751,7 @@ export function renderDetailPanel(member, role, allMembers = []) {
       <tr><td>${labels.leeFamily}</td><td style="font-weight: 600; color: ${member.isLeeFamilyMember !== false ? '#27ae60' : '#999'};">${leeFamilyStatus}</td></tr>
       ${parentInfo}
       ${member.hometown ? `<tr><td>${labels.hometown}</td><td>${member.hometown}</td></tr>` : ''}
+      ${member.nationality ? `<tr><td>${labels.nationality}</td><td>${countryFlag(member.nationality)} ${member.nationality}</td></tr>` : ''}
       <tr><td>${labels.notes}</td><td>${notes}</td></tr>
     </table>
     ${canEdit ? `
