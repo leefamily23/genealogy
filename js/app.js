@@ -9,6 +9,7 @@ import './migrate.js'; // exposes window.migrateToFirestore
 // ── State ─────────────────────────────────────────────────────────────────────
 let _members = [];
 let _role    = null;
+let _currentTab = 'genealogy'; // 'genealogy' or 'family-tree'
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
@@ -50,12 +51,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('detail-panel')?.classList.add('hidden');
     });
 
+  // Tab switching
+  document.getElementById('tab-genealogy')
+    ?.addEventListener('click', () => switchTab('genealogy'));
+  document.getElementById('tab-family-tree')
+    ?.addEventListener('click', () => switchTab('family-tree'));
+
   // Global error event
   document.addEventListener('show-error', (e) => showErrorBanner(e.detail));
 
   // Member selected event — render detail panel in sidebar
   document.addEventListener('member-selected', (e) => {
-    renderDetailPanel(e.detail, _role, _members);
+    renderDetailPanel(e.detail, _role, _members); // Pass all members, not filtered
     wireDetailActions(e.detail);
   });
 
@@ -95,13 +102,60 @@ async function reloadTree() {
       console.log(`💑 Found ${spouseCount} spouse relationships`);
     }
     
-    renderTree(_members, _role);
+    // Filter members based on current tab
+    const filteredMembers = filterMembersByTab(_members, _currentTab);
+    console.log(`🔍 Filtered to ${filteredMembers.length} members for ${_currentTab} view`);
+    
+    renderTree(filteredMembers, _role);
     
     const endTime = performance.now();
     console.log(`✅ Tree reload completed in ${(endTime - startTime).toFixed(2)}ms`);
   } catch (err) {
     console.error('❌ Tree reload failed:', err);
     // Error already shown by db.js
+  }
+}
+
+// ── Tab Switching ─────────────────────────────────────────────────────────────
+function switchTab(tabName) {
+  _currentTab = tabName;
+  
+  // Update tab button styles
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  if (tabName === 'genealogy') {
+    document.getElementById('tab-genealogy')?.classList.add('active');
+  } else {
+    document.getElementById('tab-family-tree')?.classList.add('active');
+  }
+  
+  // Reload tree with filtered data
+  const filteredMembers = filterMembersByTab(_members, tabName);
+  renderTree(filteredMembers, _role);
+  
+  console.log(`📑 Switched to ${tabName} tab`);
+}
+
+// ── Filter Members by Tab ─────────────────────────────────────────────────────
+function filterMembersByTab(members, tabName) {
+  if (tabName === 'genealogy') {
+    // Genealogy: Only show Lee surname members (李 family)
+    // Check if name starts with 李 or Lee
+    return members.filter(member => {
+      const name = member.name || '';
+      const chinese = member.chinese || '';
+      
+      // Check if Chinese name starts with 李
+      const isLeeSurname = name.startsWith('李') || name.startsWith('Lee') || 
+                          chinese.startsWith('李') || chinese.startsWith('Lee');
+      
+      return isLeeSurname;
+    });
+  } else {
+    // Family Tree: Show all members
+    return members;
   }
 }
 
@@ -151,7 +205,7 @@ function wireDetailActions(member) {
   
   // Add event listeners directly without cloning (more efficient)
   if (addChildBtn) {
-    addChildBtn.onclick = () => openAddForm(member.id);
+    addChildBtn.onclick = () => openAddForm(member.id, _members);
   }
 
   if (addSpouseBtn) {

@@ -13,6 +13,12 @@
     <h1>🌳 李家族谱</h1>
     <p class="subtitle">Lee Family Genealogy Tree</p>
 
+    <!-- Tab Navigation -->
+    <div class="tab-navigation">
+      <button id="tab-genealogy" class="tab-btn active">📜 Genealogy (Lee Surname)</button>
+      <button id="tab-family-tree" class="tab-btn">🌳 Family Tree (All)</button>
+    </div>
+
     <div class="controls">
       <button id="btn-zoom-in">＋</button>
       <button id="btn-zoom-out">－</button>
@@ -73,6 +79,19 @@
       <form id="member-form">
         <input type="hidden" id="f-id" />
         <input type="hidden" id="f-parent-id" />
+
+        <!-- Spouse Selection (shown only when adding child to parent with multiple spouses) -->
+        <div id="spouse-selection-container" class="hidden" style="margin-bottom: 15px; padding: 10px; background-color: #e8f4f8; border-radius: 4px; border-left: 4px solid #3498db;">
+          <label style="font-weight: bold; color: #2c3e50;">
+            👫 Select Other Parent (Spouse)
+            <select id="f-spouse-selection" style="margin-top: 5px;">
+              <option value="">-- Select Spouse --</option>
+            </select>
+          </label>
+          <p style="font-size: 12px; color: #7f8c8d; margin-top: 5px; margin-bottom: 0;">
+            Choose which spouse is the other parent of this child
+          </p>
+        </div>
 
         <label>Chinese Name 中文名 *
           <input type="text" id="f-name" required placeholder="e.g. 李亚狗" />

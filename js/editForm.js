@@ -33,12 +33,49 @@ export function openAddSpouseForm(memberId) {
 /**
  * Open the edit form in "Add Child" mode.
  * @param {string} parentId
+ * @param {object[]} allMembers - All family members to check for spouses
  */
-export function openAddForm(parentId) {
+export function openAddForm(parentId, allMembers = []) {
   resetForm();
   document.getElementById('f-parent-id').value = parentId || '';
   document.getElementById('f-id').value = '';
   document.getElementById('modal-title').textContent = 'Add Child';
+  
+  // Check if parent has multiple spouses
+  const spouseContainer = document.getElementById('spouse-selection-container');
+  const spouseSelect = document.getElementById('f-spouse-selection');
+  
+  if (parentId && allMembers.length > 0) {
+    const parent = allMembers.find(m => m.id === parentId);
+    
+    if (parent && parent.spouses && Array.isArray(parent.spouses) && parent.spouses.length > 0) {
+      // Parent has spouses - show the selection dropdown
+      spouseSelect.innerHTML = '<option value="">-- Select Spouse --</option>';
+      
+      parent.spouses.forEach(spouseId => {
+        const spouse = allMembers.find(m => m.id === spouseId);
+        if (spouse) {
+          const option = document.createElement('option');
+          option.value = spouseId;
+          option.textContent = `${spouse.name} ${spouse.chinese ? '(' + spouse.chinese + ')' : ''}`;
+          spouseSelect.appendChild(option);
+        }
+      });
+      
+      spouseContainer.classList.remove('hidden');
+      
+      // If only one spouse, auto-select it
+      if (parent.spouses.length === 1) {
+        spouseSelect.value = parent.spouses[0];
+      }
+    } else {
+      // No spouses or single spouse - hide the selection
+      spouseContainer.classList.add('hidden');
+    }
+  } else {
+    spouseContainer.classList.add('hidden');
+  }
+  
   document.getElementById('edit-modal').classList.remove('hidden');
 }
 
@@ -57,6 +94,13 @@ export function openEditForm(member) {
   document.getElementById('f-death').value     = member.death    || '';
   document.getElementById('f-notes').value     = member.notes    || '';
   document.getElementById('modal-title').textContent = 'Edit Member';
+  
+  // Hide spouse selection when editing existing member
+  const spouseContainer = document.getElementById('spouse-selection-container');
+  if (spouseContainer) {
+    spouseContainer.classList.add('hidden');
+  }
+  
   document.getElementById('edit-modal').classList.remove('hidden');
 }
 
@@ -67,14 +111,17 @@ export function closeForm() {
   document.getElementById('edit-modal').classList.add('hidden');
   resetForm();
   
+  // Hide spouse selection container
+  const spouseContainer = document.getElementById('spouse-selection-container');
+  if (spouseContainer) {
+    spouseContainer.classList.add('hidden');
+  }
+  
   // Clear any spouse relationship data
   const form = document.getElementById('member-form');
   if (form) {
     if (form.dataset.spouseOf) {
       delete form.dataset.spouseOf;
-    }
-    if (form.dataset.childSpouseContext) {
-      delete form.dataset.childSpouseContext;
     }
   }
 }
@@ -105,7 +152,7 @@ export function initEditForm(onSaved) {
     const id       = document.getElementById('f-id').value.trim();
     const parentId = document.getElementById('f-parent-id').value.trim();
     const spouseOf = form.dataset.spouseOf; // Check if this is a spouse creation
-    const childSpouseContext = form.dataset.childSpouseContext; // Check if child has spouse context
+    const selectedSpouse = document.getElementById('f-spouse-selection')?.value; // Get selected spouse for child
     
     const member   = {
       name:     name.trim(),
@@ -117,9 +164,9 @@ export function initEditForm(onSaved) {
       parentId: parentId || null,
     };
     
-    // If child has spouse context, add additional parent reference
-    if (childSpouseContext) {
-      member.secondaryParentId = childSpouseContext;
+    // If a spouse was selected for this child, store the secondary parent
+    if (selectedSpouse) {
+      member.secondaryParentId = selectedSpouse;
     }
 
     const user = getCurrentUser();
@@ -162,20 +209,25 @@ export function initEditForm(onSaved) {
           }
         }
         
+        const description = spouseOf 
+          ? `added spouse ${member.name}` 
+          : selectedSpouse 
+            ? `added child ${member.name} (with selected spouse)`
+            : `added ${member.name}`;
+        
         await db.addHistoryEntry({
           actorUid:           user?.uid || '',
           actorName,
           actionType:         'add',
-          description:        spouseOf ? `added spouse ${member.name}` : `added ${member.name}`,
+          description:        description,
           affectedMemberName: member.name,
           parentMemberName:   '',
           timestamp:          new Date().toISOString(),
         });
       }
       
-      // Clear the spouseOf and childSpouseContext data attributes
+      // Clear the spouseOf data attribute
       delete form.dataset.spouseOf;
-      delete form.dataset.childSpouseContext;
       
       closeForm();
       if (onSaved) onSaved();

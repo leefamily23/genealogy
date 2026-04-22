@@ -27,6 +27,38 @@ header {
 header h1    { font-size: 1.3rem; letter-spacing: 2px; white-space: nowrap; }
 header .subtitle { font-size: 0.8rem; opacity: 0.85; flex: 1; white-space: nowrap; }
 
+/* Tab Navigation */
+.tab-navigation {
+  display: flex;
+  gap: 8px;
+  margin-left: 20px;
+}
+
+.tab-btn {
+  background: rgba(255,255,255,0.2);
+  border: 2px solid rgba(255,255,255,0.3);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+
+.tab-btn:hover {
+  background: rgba(255,255,255,0.3);
+  border-color: rgba(255,255,255,0.5);
+}
+
+.tab-btn.active {
+  background: #fff;
+  color: #8b1a1a;
+  border-color: #fff;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+}
+
 .controls { display: flex; gap: 6px; flex-wrap: wrap; }
 .controls button, .auth-controls button {
   background: rgba(255,255,255,0.15);
@@ -125,6 +157,24 @@ header .subtitle { font-size: 0.8rem; opacity: 0.85; flex: 1; white-space: nowra
   stroke: #a0856a;
   stroke-width: 1.5px;
   stroke-opacity: 0.7;
+}
+
+/* T-junction links for children with both parents */
+.t-junction-link {
+  fill: none;
+  stroke: #8b7355;
+  stroke-width: 2px;
+  stroke-opacity: 0.8;
+}
+
+.t-junction-link.horizontal {
+  stroke: #a0856a;
+  stroke-width: 2.5px;
+}
+
+.t-junction-link.vertical-main {
+  stroke: #8b7355;
+  stroke-width: 2px;
 }
 
 /* ── Detail Panel ─────────────────────────────────────────── */
