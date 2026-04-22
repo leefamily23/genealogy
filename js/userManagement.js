@@ -177,6 +177,19 @@ export function initUserManagement() {
           parentMemberName:   '',
           timestamp:          new Date().toISOString(),
         });
+
+        // Send invite email via EmailJS
+        try {
+          await emailjs.send('service_cbrph9q', 'template_rnqpks', {
+            to_email:   email,
+            invited_by: actorName,
+          });
+          alert(`✅ 邀请已发送至 ${email}`);
+        } catch (emailErr) {
+          console.error('Email send failed:', emailErr);
+          alert(`✅ 用户已添加，但邮件发送失败: ${emailErr.text || emailErr.message}\n请手动通知对方。`);
+        }
+
         if (emailInput) emailInput.value = '';
         await refreshUserList();
       } catch (err) { /* error dispatched by db.js */ }
