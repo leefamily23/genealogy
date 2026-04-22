@@ -660,7 +660,8 @@ export function renderDetailPanel(member, role, allMembers = []) {
       ${member.imageURL ? `
         <div style="flex-shrink: 0;">
           <img src="${member.imageURL}" alt="${member.name}" 
-               style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover; border: 3px solid #8b1a1a; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"
+               onclick="window.openPhotoViewer('${member.imageURL}', '${member.name.replace(/'/g, "\\'")}')"
+               style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover; border: 3px solid #8b1a1a; box-shadow: 0 2px 8px rgba(0,0,0,0.2); cursor: zoom-in;"
                onerror="this.style.display='none'">
         </div>
       ` : ''}

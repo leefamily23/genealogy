@@ -195,5 +195,21 @@
   <!-- App entry point (ES module) -->
   <script type="module" src="js/app.js"></script>
 
+  <!-- Photo Lightbox -->
+  <div id="photo-lightbox" onclick="this.style.display='none'" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; flex-direction:column; gap:12px;">
+    <img id="photo-lightbox-img" src="" alt="" style="max-width:90vw; max-height:80vh; border-radius:12px; box-shadow:0 8px 40px rgba(0,0,0,0.6); object-fit:contain;">
+    <p id="photo-lightbox-name" style="color:#fff; font-size:1.1rem; font-weight:600; margin:0;"></p>
+    <p style="color:#aaa; font-size:0.8rem; margin:0;">点击任意处关闭</p>
+  </div>
+
+  <script>
+    window.openPhotoViewer = function(src, name) {
+      const lb = document.getElementById('photo-lightbox');
+      document.getElementById('photo-lightbox-img').src = src;
+      document.getElementById('photo-lightbox-name').textContent = name;
+      lb.style.display = 'flex';
+    };
+  </script>
+
 </body>
 </html>
