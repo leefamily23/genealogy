@@ -4,6 +4,7 @@ import { renderTree, renderDetailPanel }        from './tree.js';
 import { initEditForm, openAddForm, openEditForm, openAddSpouseForm, handleDelete } from './editForm.js';
 import { startHistoryPanel, stopHistoryPanel, initHistoryToggle } from './historyPanel.js';
 import { openUserManagement, initUserManagement } from './userManagement.js';
+import { getBuildInfo, logBuildInfo } from './build-info.js';
 import './migrate.js'; // exposes window.migrateToFirestore
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -12,6 +13,9 @@ let _role    = null;
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
+
+  // Initialize build info display
+  initBuildInfo();
 
   // Handle redirect result (for iOS sign-in)
   await handleRedirectResult();
@@ -111,29 +115,47 @@ function wireDetailActions(member) {
   // Check if member has children
   const hasChildren = _members.some(m => m.parentId === member.id);
   
-  document.querySelector('.btn-add-child')
-    ?.addEventListener('click', () => {
-      document.getElementById('detail-panel')?.classList.add('hidden');
+  // Get buttons from the current detail panel content, not globally
+  const detailContent = document.getElementById('sidebar-detail-content');
+  if (!detailContent) return;
+  
+  const addChildBtn = detailContent.querySelector('.btn-add-child');
+  const addSpouseBtn = detailContent.querySelector('.btn-add-spouse');
+  const editBtn = detailContent.querySelector('.btn-edit');
+  const deleteBtn = detailContent.querySelector('.btn-delete');
+  
+  // Remove any existing event listeners by cloning and replacing the buttons
+  if (addChildBtn) {
+    const newAddChildBtn = addChildBtn.cloneNode(true);
+    addChildBtn.parentNode.replaceChild(newAddChildBtn, addChildBtn);
+    newAddChildBtn.addEventListener('click', () => {
       openAddForm(member.id);
     });
+  }
 
-  document.querySelector('.btn-add-spouse')
-    ?.addEventListener('click', () => {
-      document.getElementById('detail-panel')?.classList.add('hidden');
+  if (addSpouseBtn) {
+    const newAddSpouseBtn = addSpouseBtn.cloneNode(true);
+    addSpouseBtn.parentNode.replaceChild(newAddSpouseBtn, addSpouseBtn);
+    newAddSpouseBtn.addEventListener('click', () => {
       openAddSpouseForm(member.id);
     });
+  }
 
-  document.querySelector('.btn-edit')
-    ?.addEventListener('click', () => {
-      document.getElementById('detail-panel')?.classList.add('hidden');
+  if (editBtn) {
+    const newEditBtn = editBtn.cloneNode(true);
+    editBtn.parentNode.replaceChild(newEditBtn, editBtn);
+    newEditBtn.addEventListener('click', () => {
       openEditForm(member);
     });
+  }
 
-  document.querySelector('.btn-delete')
-    ?.addEventListener('click', () => {
-      document.getElementById('detail-panel')?.classList.add('hidden');
+  if (deleteBtn) {
+    const newDeleteBtn = deleteBtn.cloneNode(true);
+    deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+    newDeleteBtn.addEventListener('click', () => {
       handleDelete(member.id, member.name, hasChildren, reloadTree);
     });
+  }
 }
 
 // ── Error banner ──────────────────────────────────────────────────────────────
@@ -143,4 +165,41 @@ export function showErrorBanner(message) {
   if (!banner || !text) return;
   text.textContent = message;
   banner.classList.remove('hidden');
+}
+// ── Build Info Display ────────────────────────────────────────────────────────
+function initBuildInfo() {
+  try {
+    const buildInfo = getBuildInfo();
+    
+    // Log build info to console
+    logBuildInfo();
+    
+    // Update UI elements
+    const versionEl = document.getElementById('build-version');
+    const commitEl = document.getElementById('build-commit');
+    
+    if (versionEl) {
+      versionEl.textContent = `v${buildInfo.version}`;
+    }
+    
+    if (commitEl) {
+      commitEl.textContent = buildInfo.shortCommit;
+      commitEl.title = `Commit: ${buildInfo.commitId}\nBranch: ${buildInfo.branch}\nBuilt: ${buildInfo.formattedDate}`;
+      
+      // Make commit clickable to show full info
+      commitEl.addEventListener('click', () => {
+        alert(`Family Tree Build Information\n\nVersion: ${buildInfo.version}\nCommit: ${buildInfo.commitId}\nBranch: ${buildInfo.branch}\nBuild Date: ${buildInfo.formattedDate}`);
+      });
+    }
+    
+  } catch (error) {
+    console.warn('Could not load build info:', error);
+    
+    // Fallback display
+    const commitEl = document.getElementById('build-commit');
+    if (commitEl) {
+      commitEl.textContent = 'dev';
+      commitEl.title = 'Development build';
+    }
+  }
 }

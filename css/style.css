@@ -558,3 +558,69 @@ body.sidebar-open #tree-container {
     margin-left: 0;
   }
 }
+/* ── Multiple Spouse Support ─────────────────────────────────── */
+.marriage-link {
+  stroke: #e74c3c;
+  stroke-width: 3;
+  stroke-dasharray: 5,5;
+  opacity: 0.8;
+}
+
+.marriage-link:hover {
+  opacity: 1;
+  stroke-width: 4;
+}
+
+/* Different colors for multiple marriages */
+.marriage-link.marriage-1 { stroke: #e74c3c; }
+.marriage-link.marriage-2 { stroke: #f39c12; }
+.marriage-link.marriage-3 { stroke: #9b59b6; }
+.marriage-link.marriage-4 { stroke: #3498db; }
+
+/* Spouse node styling */
+.spouse-node circle {
+  stroke: #e74c3c;
+  stroke-width: 2;
+  opacity: 0.9;
+}
+
+.spouse-node:hover circle {
+  stroke-width: 3;
+  opacity: 1;
+}
+/* ── Build Info Display ──────────────────────────────────────── */
+.build-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 0.7rem;
+  opacity: 0.7;
+  margin-left: 10px;
+  line-height: 1.2;
+}
+
+.build-info span {
+  color: rgba(255, 255, 255, 0.8);
+  font-family: 'Courier New', monospace;
+}
+
+.build-info:hover {
+  opacity: 1;
+}
+
+#build-commit {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+#build-commit:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .build-info {
+    display: none; /* Hide on mobile to save space */
+  }
+}

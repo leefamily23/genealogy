@@ -44,8 +44,17 @@ export function renderTree(members, role) {
       const hasChildren = members.some(m => m.parentId === member.id);
       if (hasChildren) return true;
       
-      // Exclude if they're only connected as spouses
-      return false;
+      // Exclude if they're only connected as spouses (check both formats)
+      const isReferencedAsSpouse = members.some(m => {
+        // Check new spouses array format
+        if (m.spouses && Array.isArray(m.spouses)) {
+          return m.spouses.includes(member.id);
+        }
+        // Check legacy spouse field format
+        return m.spouse === member.id;
+      });
+      
+      return !isReferencedAsSpouse;
     });
 
     // If no main lineage found, include the first root member
@@ -128,13 +137,43 @@ export function renderTree(members, role) {
   
   root.descendants().forEach(node => {
     const member = node.data;
-    if (member.spouse && !renderedSpouses.has(member.spouse)) {
+    
+    // Handle multiple spouses (new array format)
+    if (member.spouses && Array.isArray(member.spouses)) {
+      member.spouses.forEach((spouseId, index) => {
+        if (!renderedSpouses.has(spouseId)) {
+          const spouseMember = members.find(m => m.id === spouseId);
+          if (spouseMember) {
+            // Position multiple spouses with increasing offset
+            const spouseNode = {
+              data: spouseMember,
+              x: node.x + 70 + (index * 50), // Offset multiple spouses
+              y: node.y,
+              isSpouse: true
+            };
+            spouseData.push(spouseNode);
+            
+            // Create marriage link
+            marriageLinks.push({
+              source: { x: node.x + NODE_RADIUS, y: node.y },
+              target: { x: spouseNode.x - NODE_RADIUS, y: spouseNode.y }
+            });
+            
+            // Mark this spouse as rendered
+            renderedSpouses.add(spouseId);
+          }
+        }
+      });
+    }
+    
+    // Handle legacy single spouse format (backward compatibility)
+    else if (member.spouse && !renderedSpouses.has(member.spouse)) {
       const spouseMember = members.find(m => m.id === member.spouse);
       if (spouseMember) {
         // Position spouse to the right of the main member
         const spouseNode = {
           data: spouseMember,
-          x: node.x + 70, // Offset to the right
+          x: node.x + 70,
           y: node.y,
           isSpouse: true
         };
@@ -156,14 +195,11 @@ export function renderTree(members, role) {
   group.selectAll('.marriage-link')
     .data(marriageLinks)
     .join('line')
-    .attr('class', 'marriage-link')
+    .attr('class', (d, i) => `marriage-link marriage-${(i % 4) + 1}`) // Cycle through 4 colors
     .attr('x1', d => d.source.x)
     .attr('y1', d => d.source.y)
     .attr('x2', d => d.target.x)
-    .attr('y2', d => d.target.y)
-    .attr('stroke', '#e74c3c')
-    .attr('stroke-width', 3)
-    .attr('stroke-dasharray', '5,5');
+    .attr('y2', d => d.target.y);
 
   // Render spouse nodes
   const spouseNodes = group.selectAll('.spouse-node')
@@ -224,10 +260,6 @@ export function renderDetailPanel(member, role, allMembers = []) {
   const nickname = member.chinese || '—';
   const notes  = member.notes  || '—';
 
-  // Find spouse by checking who has this member's ID as their spouse field
-  const spouseObj = allMembers.find(m => m.spouse === member.id);
-  const spouseName = spouseObj ? spouseObj.name : (member.spouse ? allMembers.find(m => m.id === member.spouse)?.name || '—' : '—');
-
   const canEdit = role === 'editor' || role === 'admin';
   const hasChildren = allMembers.some(m => m.parentId === member.id);
 
@@ -238,7 +270,6 @@ export function renderDetailPanel(member, role, allMembers = []) {
       <tr><td>Gender</td><td>${gender}</td></tr>
       <tr><td>Born</td><td>${birth}</td></tr>
       <tr><td>Died</td><td>${death}</td></tr>
-      <tr><td>Spouse</td><td>${spouseName}</td></tr>
       <tr><td>Notes</td><td>${notes}</td></tr>
     </table>
     ${canEdit ? `

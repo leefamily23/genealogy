@@ -133,14 +133,22 @@ export function initEditForm(onSaved) {
         
         // If this is a spouse, add the spouse relationship to the member data before saving
         if (spouseOf) {
-          memberData.spouse = spouseOf;
+          memberData.spouses = [spouseOf]; // Initialize spouses array
         }
         
         const newMemberId = await db.addMember(memberData);
         
         // If this is a spouse, update the original member to reference the new spouse
         if (spouseOf) {
-          await db.updateMember(spouseOf, { spouse: newMemberId });
+          // Get the original member's current spouses
+          const originalMember = await db.getMember(spouseOf);
+          const currentSpouses = originalMember.spouses || [];
+          
+          // Add the new spouse to the array if not already present
+          if (!currentSpouses.includes(newMemberId)) {
+            currentSpouses.push(newMemberId);
+            await db.updateMember(spouseOf, { spouses: currentSpouses });
+          }
         }
         
         await db.addHistoryEntry({

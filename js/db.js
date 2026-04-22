@@ -49,6 +49,21 @@ async function getNextMemberId() {
 }
 
 /**
+ * Get a single family member by ID.
+ * @param {string} id
+ * @returns {Promise<object|null>}
+ */
+export async function getMember(id) {
+  try {
+    const snap = await getDoc(doc(db, 'family', id));
+    return snap.exists() ? { ...snap.data(), id: snap.id } : null;
+  } catch (err) {
+    dispatchError(`Failed to get member: ${err.message}`);
+    throw err;
+  }
+}
+
+/**
  * Add a new family member. Returns the new document id.
  * @param {object} member
  * @returns {Promise<string>}
