@@ -4,12 +4,14 @@ import { renderTree, renderDetailPanel }        from './tree.js';
 import { initEditForm, openAddForm, openEditForm, openAddSpouseForm, handleDelete } from './editForm.js';
 import { startHistoryPanel, stopHistoryPanel, initHistoryToggle } from './historyPanel.js';
 import { openUserManagement, initUserManagement } from './userManagement.js';
+import { applyTranslations } from './translations.js';
 import './migrate.js'; // exposes window.migrateToFirestore
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let _members = [];
 let _role    = null;
 let _currentTab = 'genealogy'; // 'genealogy' or 'family-tree'
+let _currentLanguage = 'zh'; // 'zh' or 'en'
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
@@ -21,6 +23,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   initHistoryToggle();
   initUserManagement();
   initEditForm(reloadTree);
+  
+  // Apply initial translations (Chinese by default)
+  applyTranslations(_currentLanguage);
 
   // Initialize build info display (after other initialization)
   setTimeout(async () => {
@@ -64,6 +69,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.addEventListener('member-selected', (e) => {
     renderDetailPanel(e.detail, _role, _members); // Pass all members, not filtered
     wireDetailActions(e.detail);
+  });
+  
+  // Language changed event — refresh detail panel if a member is selected
+  let _selectedMember = null;
+  document.addEventListener('member-selected', (e) => {
+    _selectedMember = e.detail;
+  });
+  
+  document.addEventListener('language-changed', (e) => {
+    _currentLanguage = e.detail.language;
+    
+    // Refresh detail panel if a member is currently selected
+    if (_selectedMember) {
+      renderDetailPanel(_selectedMember, _role, _members);
+      wireDetailActions(_selectedMember);
+    }
   });
 
   // Auth state changes

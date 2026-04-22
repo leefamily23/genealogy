@@ -3,9 +3,11 @@ const NODE_RADIUS  = 22;
 const NODE_SPACING = { x: 120, y: 160 };
 let   showChinese  = true;
 let   _currentRole = null;
+let   _currentLanguage = 'zh'; // 'zh' or 'en'
 
 // ── Module-level D3 references ────────────────────────────────────────────────
 let svg, group, zoom, nodes;
+let currentTransform = null; // Store current zoom/pan transform
 
 /**
  * Render (or re-render) the family tree from a flat members array.
@@ -106,12 +108,22 @@ export function renderTree(members, role) {
   // ── Zoom & pan ─────────────────────────────────────────────────────────────
   zoom = d3.zoom()
     .scaleExtent([0.1, 3])
-    .on('zoom', e => group.attr('transform', e.transform));
+    .on('zoom', e => {
+      group.attr('transform', e.transform);
+      currentTransform = e.transform; // Store current transform
+    });
   svg.call(zoom);
 
   const w = container.clientWidth;
   const h = container.clientHeight;
-  svg.call(zoom.transform, d3.zoomIdentity.translate(w / 2, 80).scale(0.8));
+  
+  // Only reset to center if no previous transform exists (first load)
+  if (!currentTransform) {
+    currentTransform = d3.zoomIdentity.translate(w / 2, 80).scale(0.8);
+  }
+  
+  // Apply the stored transform (preserves position after reload)
+  svg.call(zoom.transform, currentTransform);
 
   // ── Links (parent-child relationships) ────────────────────────────────────
   // Draw parent-child links with straight orthogonal lines (right angles)
@@ -151,13 +163,7 @@ export function renderTree(members, role) {
   nodes.append('text')
     .attr('class', 'name-label')
     .attr('dy', NODE_RADIUS + 14)
-    .text(d => {
-      if (showChinese) {
-        return d.data.name;
-      } else {
-        return d.data.chinese || d.data.name;
-      }
-    });
+    .text(d => d.data.name); // Always show Chinese name
 
   nodes.append('text')
     .attr('class', 'year-label')
@@ -296,13 +302,7 @@ export function renderTree(members, role) {
   spouseNodes.append('text')
     .attr('class', 'name-label')
     .attr('dy', NODE_RADIUS + 14)
-    .text(d => {
-      if (showChinese) {
-        return d.data.name;
-      } else {
-        return d.data.chinese || d.data.name;
-      }
-    });
+    .text(d => d.data.name); // Always show Chinese name
 
   spouseNodes.append('text')
     .attr('class', 'year-label')
@@ -331,13 +331,38 @@ export function renderDetailPanel(member, role, allMembers = []) {
   const content = document.getElementById('sidebar-detail-content');
   if (!content) return;
 
-  const gender = member.gender === 'male' ? '♂ Male'
-               : member.gender === 'female' ? '♀ Female' : '—';
+  // Get current language
+  const lang = _currentLanguage;
+  const isZh = lang === 'zh';
+  
+  // Translations
+  const labels = {
+    gender: isZh ? '性别' : 'Gender',
+    male: isZh ? '♂ 男' : '♂ Male',
+    female: isZh ? '♀ 女' : '♀ Female',
+    unknown: isZh ? '—' : '—',
+    born: isZh ? '出生' : 'Born',
+    died: isZh ? '去世' : 'Died',
+    living: isZh ? '在世' : 'Living',
+    leeFamily: isZh ? '李家成员' : 'Lee Family',
+    yes: isZh ? '✓ 是' : '✓ Yes',
+    no: isZh ? '✗ 否' : '✗ No',
+    parent: isZh ? '父母' : 'Parent',
+    otherParent: isZh ? '另一方父母' : 'Other Parent',
+    notes: isZh ? '备注' : 'Notes',
+    addChild: isZh ? '➕ 添加子女' : '➕ Add Child',
+    addSpouse: isZh ? '💑 添加配偶' : '💑 Add Spouse',
+    edit: isZh ? '✏️ 编辑' : '✏️ Edit',
+    delete: isZh ? '🗑️ 删除' : '🗑️ Delete'
+  };
+
+  const gender = member.gender === 'male' ? labels.male
+               : member.gender === 'female' ? labels.female : labels.unknown;
   const birth  = member.birth  || '—';
-  const death  = member.death  || 'Living';
+  const death  = member.death  || labels.living;
   const nickname = member.chinese || '—';
   const notes  = member.notes  || '—';
-  const leeFamilyStatus = member.isLeeFamilyMember !== false ? '✓ Yes' : '✗ No';
+  const leeFamilyStatus = member.isLeeFamilyMember !== false ? labels.yes : labels.no;
 
   const canEdit = role === 'editor' || role === 'admin';
   const hasChildren = allMembers.some(m => m.parentId === member.id);
@@ -347,13 +372,13 @@ export function renderDetailPanel(member, role, allMembers = []) {
   if (member.parentId) {
     const parent = allMembers.find(m => m.id === member.parentId);
     if (parent) {
-      parentInfo = `<tr><td>Parent</td><td>${parent.name}</td></tr>`;
+      parentInfo = `<tr><td>${labels.parent}</td><td>${parent.name}</td></tr>`;
       
       // If there's a secondary parent (spouse), show it
       if (member.secondaryParentId) {
         const secondaryParent = allMembers.find(m => m.id === member.secondaryParentId);
         if (secondaryParent) {
-          parentInfo += `<tr><td>Other Parent</td><td>${secondaryParent.name}</td></tr>`;
+          parentInfo += `<tr><td>${labels.otherParent}</td><td>${secondaryParent.name}</td></tr>`;
         }
       }
     }
@@ -363,19 +388,19 @@ export function renderDetailPanel(member, role, allMembers = []) {
     <h2 style="margin-bottom: 8px; font-size: 22px; color: #2c1810;">${member.name}</h2>
     ${nickname !== '—' ? `<div class="chinese-name">${nickname}</div>` : ''}
     <table>
-      <tr><td>Gender</td><td>${gender}</td></tr>
-      <tr><td>Born</td><td>${birth}</td></tr>
-      <tr><td>Died</td><td>${death}</td></tr>
-      <tr><td>Lee Family</td><td style="font-weight: 600; color: ${member.isLeeFamilyMember !== false ? '#27ae60' : '#999'};">${leeFamilyStatus}</td></tr>
+      <tr><td>${labels.gender}</td><td>${gender}</td></tr>
+      <tr><td>${labels.born}</td><td>${birth}</td></tr>
+      <tr><td>${labels.died}</td><td>${death}</td></tr>
+      <tr><td>${labels.leeFamily}</td><td style="font-weight: 600; color: ${member.isLeeFamilyMember !== false ? '#27ae60' : '#999'};">${leeFamilyStatus}</td></tr>
       ${parentInfo}
-      <tr><td>Notes</td><td>${notes}</td></tr>
+      <tr><td>${labels.notes}</td><td>${notes}</td></tr>
     </table>
     ${canEdit ? `
     <div class="detail-actions">
-      <button class="btn-action btn-add-child" data-id="${member.id}">➕ Add Child</button>
-      <button class="btn-action btn-add-spouse" data-id="${member.id}">💑 Add Spouse</button>
-      <button class="btn-action btn-edit" data-id="${member.id}">✏️ Edit</button>
-      ${!hasChildren ? `<button class="btn-action btn-delete" data-id="${member.id}" data-name="${member.name}">🗑️ Delete</button>` : ''}
+      <button class="btn-action btn-add-child" data-id="${member.id}">${labels.addChild}</button>
+      <button class="btn-action btn-add-spouse" data-id="${member.id}">${labels.addSpouse}</button>
+      <button class="btn-action btn-edit" data-id="${member.id}">${labels.edit}</button>
+      ${!hasChildren ? `<button class="btn-action btn-delete" data-id="${member.id}" data-name="${member.name}">${labels.delete}</button>` : ''}
     </div>` : ''}
   `;
 }
@@ -399,16 +424,18 @@ function setupControls(container) {
 
   if (btnLang) btnLang.onclick = () => {
     showChinese = !showChinese;
-    if (nodes) {
-      nodes.selectAll('text.name-label')
-        .text(d => {
-          if (showChinese) {
-            return d.data.name;
-          } else {
-            return d.data.chinese || d.data.name;
-          }
-        });
-    }
+    _currentLanguage = showChinese ? 'zh' : 'en';
+    
+    // Tree nodes always show Chinese names - no need to update them
+    // Only update UI translations
+    import('./translations.js').then(module => {
+      module.applyTranslations(_currentLanguage);
+      
+      // Trigger custom event for other modules to update
+      document.dispatchEvent(new CustomEvent('language-changed', { 
+        detail: { language: _currentLanguage } 
+      }));
+    });
   };
 
   // ── Search ─────────────────────────────────────────────────────────────────
