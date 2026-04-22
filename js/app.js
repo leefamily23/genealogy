@@ -10,7 +10,7 @@ import './migrate.js'; // exposes window.migrateToFirestore
 // ── State ─────────────────────────────────────────────────────────────────────
 let _members = [];
 let _role    = null;
-let _currentTab = 'genealogy'; // 'genealogy' or 'family-tree'
+let _currentTab = 'family-tree'; // default to 家族树 (全部)
 let _currentLanguage = 'zh'; // 'zh' or 'en'
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
@@ -61,6 +61,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     ?.addEventListener('click', () => switchTab('genealogy'));
   document.getElementById('tab-family-tree')
     ?.addEventListener('click', () => switchTab('family-tree'));
+
+  // Set default active tab UI
+  document.getElementById('tab-family-tree')?.classList.add('active');
+  document.getElementById('tab-genealogy')?.classList.remove('active');
 
   // Global error event
   document.addEventListener('show-error', (e) => showErrorBanner(e.detail));

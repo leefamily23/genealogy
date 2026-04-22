@@ -41,60 +41,77 @@ header .subtitle {
 /* Tab Navigation */
 .tab-navigation {
   display: flex;
-  gap: 8px;
-  margin-left: 20px;
-  flex-shrink: 0; /* Don't shrink tabs */
+  gap: 6px;
+  margin-left: 16px;
+  flex-shrink: 0;
+  align-items: center;
 }
 
 .tab-btn {
-  background: rgba(255,255,255,0.2);
-  border: 2px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.15);
+  border: 1.5px solid rgba(255,255,255,0.35);
   color: #fff;
-  padding: 8px 16px;
-  border-radius: 8px 8px 0 0;
+  padding: 7px 18px;
+  border-radius: 20px;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.83rem;
   font-weight: 600;
-  transition: all 0.3s;
+  transition: all 0.2s;
   white-space: nowrap;
-  width: 220px; /* Fixed width instead of min-width */
   text-align: center;
-  flex-shrink: 0; /* Don't shrink */
+  flex-shrink: 0;
 }
 
 .tab-btn:hover {
-  background: rgba(255,255,255,0.3);
-  border-color: rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.28);
+  border-color: rgba(255,255,255,0.6);
 }
 
 .tab-btn.active {
   background: #fff;
   color: #8b1a1a;
   border-color: #fff;
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 .controls { 
   display: flex; 
   gap: 6px; 
-  flex-wrap: nowrap; /* Don't wrap */
-  flex-shrink: 0; /* Don't shrink */
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  align-items: center;
 }
-.controls button, .auth-controls button {
+.controls button {
   background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.4);
+  border: 1.5px solid rgba(255,255,255,0.35);
   color: #fff;
-  padding: 5px 10px;
-  border-radius: 4px;
+  padding: 7px 14px;
+  border-radius: 20px;
   cursor: pointer;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
+  font-weight: 500;
   transition: background 0.2s;
   white-space: nowrap;
-  width: 50px; /* Fixed width */
   text-align: center;
-  flex-shrink: 0; /* Don't shrink */
+  flex-shrink: 0;
 }
-.controls button:hover, .auth-controls button:hover {
+.controls button:hover {
+  background: rgba(255,255,255,0.3);
+}
+.auth-controls button {
+  background: rgba(255,255,255,0.15);
+  border: 1.5px solid rgba(255,255,255,0.35);
+  color: #fff;
+  padding: 7px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: background 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.auth-controls button:hover {
   background: rgba(255,255,255,0.3);
 }
 
@@ -702,8 +719,8 @@ body.sidebar-open #tree-container {
   /* Compact header on mobile */
   header h1 { font-size: 1rem; min-width: unset; }
   header .subtitle { display: none; }
-  .tab-btn { width: auto; padding: 6px 10px; font-size: 0.75rem; }
-  .tab-navigation { margin-left: 8px; }
+  .tab-btn { padding: 5px 12px; font-size: 0.75rem; }
+  .tab-navigation { margin-left: 8px; gap: 4px; }
 }
 /* ── Multiple Spouse Support ─────────────────────────────────── */
 .marriage-link {
