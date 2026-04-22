@@ -198,8 +198,8 @@ header .subtitle { font-size: 0.8rem; opacity: 0.85; flex: 1; white-space: nowra
   font-size: 1rem; cursor: pointer; color: #888;
 }
 #detail-close:hover { color: #333; }
-#detail-content h2 { font-size: 1.1rem; color: #8b1a1a; margin-bottom: 4px; }
-#detail-content .chinese-name { font-size: 1.3rem; color: #c0392b; margin-bottom: 10px; }
+#detail-content h2 { font-size: 1.1rem; color: #2c1810; margin-bottom: 4px; }
+#detail-content .chinese-name { font-size: 1.3rem; color: #2c1810; margin-bottom: 10px; font-weight: 600; }
 #detail-content table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
 #detail-content td { padding: 3px 5px; border-bottom: 1px solid #f0e0cc; }
 #detail-content td:first-child { font-weight: 600; color: #7a4a2a; width: 70px; }
@@ -263,7 +263,7 @@ header .subtitle { font-size: 0.8rem; opacity: 0.85; flex: 1; white-space: nowra
   font-size: 0.78rem;
   line-height: 1.4;
 }
-.history-actor { font-weight: 700; color: #8b1a1a; display: block; }
+.history-actor { font-weight: 700; color: #2c1810; display: block; }
 .history-desc  { color: #333; display: block; }
 .history-time  { color: #999; font-size: 0.72rem; display: block; margin-top: 2px; }
 .history-empty { padding: 12px 14px; color: #999; font-size: 0.8rem; }
@@ -501,9 +501,9 @@ header .subtitle { font-size: 0.8rem; opacity: 0.85; flex: 1; white-space: nowra
 
 .sidebar-section .chinese-name {
   font-size: 20px;
-  color: #8b1a1a;
+  color: #2c1810;
   margin-bottom: 12px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .sidebar-section .detail-actions {
@@ -578,7 +578,7 @@ header .subtitle { font-size: 0.8rem; opacity: 0.85; flex: 1; white-space: nowra
 
 #sidebar-history-list .history-actor {
   font-weight: 600;
-  color: #8b1a1a;
+  color: #2c1810;
 }
 
 #sidebar-history-list .history-time {
@@ -612,7 +612,6 @@ body.sidebar-open #tree-container {
 .marriage-link {
   stroke: #e74c3c;
   stroke-width: 3;
-  stroke-dasharray: 5,5;
   opacity: 0.8;
 }
 

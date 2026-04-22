@@ -267,7 +267,7 @@ export function renderTree(members, role) {
     }
   });
 
-  // Render STRAIGHT marriage links with dashed red line
+  // Render STRAIGHT marriage links with solid red line
   group.selectAll('.marriage-link')
     .data(marriageLinks)
     .join('line')
@@ -277,8 +277,7 @@ export function renderTree(members, role) {
     .attr('x2', d => d.target.x)
     .attr('y2', d => d.target.y)
     .attr('stroke', '#e74c3c')
-    .attr('stroke-width', 3)
-    .attr('stroke-dasharray', '5,5'); // Dashed line
+    .attr('stroke-width', 3); // Solid line (removed dasharray)
 
   // Render spouse nodes
   const spouseNodes = group.selectAll('.spouse-node')
@@ -338,6 +337,7 @@ export function renderDetailPanel(member, role, allMembers = []) {
   const death  = member.death  || 'Living';
   const nickname = member.chinese || '—';
   const notes  = member.notes  || '—';
+  const leeFamilyStatus = member.isLeeFamilyMember !== false ? '✓ Yes' : '✗ No';
 
   const canEdit = role === 'editor' || role === 'admin';
   const hasChildren = allMembers.some(m => m.parentId === member.id);
@@ -366,6 +366,7 @@ export function renderDetailPanel(member, role, allMembers = []) {
       <tr><td>Gender</td><td>${gender}</td></tr>
       <tr><td>Born</td><td>${birth}</td></tr>
       <tr><td>Died</td><td>${death}</td></tr>
+      <tr><td>Lee Family</td><td style="font-weight: 600; color: ${member.isLeeFamilyMember !== false ? '#27ae60' : '#999'};">${leeFamilyStatus}</td></tr>
       ${parentInfo}
       <tr><td>Notes</td><td>${notes}</td></tr>
     </table>

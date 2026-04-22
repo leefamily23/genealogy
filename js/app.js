@@ -141,17 +141,11 @@ function switchTab(tabName) {
 // ── Filter Members by Tab ─────────────────────────────────────────────────────
 function filterMembersByTab(members, tabName) {
   if (tabName === 'genealogy') {
-    // Genealogy: Only show Lee surname members (李 family)
-    // Check if name starts with 李 or Lee
+    // Genealogy: Only show members marked as Lee family members
     return members.filter(member => {
-      const name = member.name || '';
-      const chinese = member.chinese || '';
-      
-      // Check if Chinese name starts with 李
-      const isLeeSurname = name.startsWith('李') || name.startsWith('Lee') || 
-                          chinese.startsWith('李') || chinese.startsWith('Lee');
-      
-      return isLeeSurname;
+      // Check the isLeeFamilyMember flag
+      // Default to true for backward compatibility with existing data
+      return member.isLeeFamilyMember !== false;
     });
   } else {
     // Family Tree: Show all members

@@ -23,6 +23,9 @@ export function openAddSpouseForm(memberId) {
   document.getElementById('f-id').value = '';
   document.getElementById('modal-title').textContent = 'Add Spouse';
   
+  // Spouses are typically NOT Lee family members (unless they also have Lee surname)
+  document.getElementById('f-lee-family-member').checked = false;
+  
   // Store the original member ID for linking after creation
   const form = document.getElementById('member-form');
   form.dataset.spouseOf = memberId;
@@ -40,6 +43,18 @@ export function openAddForm(parentId, allMembers = []) {
   document.getElementById('f-parent-id').value = parentId || '';
   document.getElementById('f-id').value = '';
   document.getElementById('modal-title').textContent = 'Add Child';
+  
+  // Auto-check Lee family member for children (they inherit family membership)
+  if (parentId && allMembers.length > 0) {
+    const parent = allMembers.find(m => m.id === parentId);
+    if (parent && parent.isLeeFamilyMember) {
+      document.getElementById('f-lee-family-member').checked = true;
+    } else {
+      document.getElementById('f-lee-family-member').checked = false;
+    }
+  } else {
+    document.getElementById('f-lee-family-member').checked = true; // Default to checked
+  }
   
   // Check if parent has multiple spouses
   const spouseContainer = document.getElementById('spouse-selection-container');
@@ -93,6 +108,10 @@ export function openEditForm(member) {
   document.getElementById('f-birth').value     = member.birth    || '';
   document.getElementById('f-death').value     = member.death    || '';
   document.getElementById('f-notes').value     = member.notes    || '';
+  
+  // Set Lee family member checkbox
+  document.getElementById('f-lee-family-member').checked = member.isLeeFamilyMember !== false; // Default to true if not set
+  
   document.getElementById('modal-title').textContent = 'Edit Member';
   
   // Hide spouse selection when editing existing member
@@ -153,6 +172,7 @@ export function initEditForm(onSaved) {
     const parentId = document.getElementById('f-parent-id').value.trim();
     const spouseOf = form.dataset.spouseOf; // Check if this is a spouse creation
     const selectedSpouse = document.getElementById('f-spouse-selection')?.value; // Get selected spouse for child
+    const isLeeFamilyMember = document.getElementById('f-lee-family-member')?.checked || false; // Get checkbox value
     
     const member   = {
       name:     name.trim(),
@@ -162,6 +182,7 @@ export function initEditForm(onSaved) {
       death:    document.getElementById('f-death').value.trim(),
       notes:    document.getElementById('f-notes').value.trim(),
       parentId: parentId || null,
+      isLeeFamilyMember: isLeeFamilyMember, // Store Lee family member status
     };
     
     // If a spouse was selected for this child, store the secondary parent
