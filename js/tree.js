@@ -13,14 +13,13 @@ let   _currentLanguage = 'zh'; // 'zh' or 'en'
  * @param {string} gender - 'male', 'female', or 'unknown'
  * @returns {string} CSS color
  */
-function getNodeColor(gender) {
+function getNodeColor(gender, death) {
+  // Grey out deceased members
+  if (death && death.trim() !== '') return '#888888';
   switch (gender) {
-    case 'male':
-      return '#4a90e2'; // Blue for males
-    case 'female':
-      return '#e24a90'; // Pink for females
-    default:
-      return '#52c4a0'; // Teal for unknown (like your example image)
+    case 'male':   return '#4a90e2';
+    case 'female': return '#e24a90';
+    default:       return '#52c4a0';
   }
 }
 
@@ -210,7 +209,7 @@ export function renderTree(members, role) {
       .attr('height', NODE_HEIGHT)
       .attr('rx', 12)
       .attr('ry', 12)
-      .attr('fill', getNodeColor(member.gender))
+      .attr('fill', getNodeColor(member.gender, member.death))
       .attr('stroke', '#fff')
       .attr('stroke-width', 2)
       .style('cursor', 'pointer');
@@ -445,7 +444,7 @@ export function renderTree(members, role) {
       .attr('height', NODE_HEIGHT)
       .attr('rx', 12)
       .attr('ry', 12)
-      .attr('fill', getNodeColor(member.gender))
+      .attr('fill', getNodeColor(member.gender, member.death))
       .attr('stroke', '#fff')
       .attr('stroke-width', 2);
     
@@ -673,7 +672,7 @@ export function renderDetailPanel(member, role, allMembers = []) {
     <table>
       <tr><td>${labels.gender}</td><td>${gender}</td></tr>
       <tr><td>${labels.born}</td><td>${birth}</td></tr>
-      <tr><td>${labels.died}</td><td>${death}</td></tr>
+      ${member.death ? `<tr><td>${labels.died}</td><td>${member.death}</td></tr>` : ''}
       <tr><td>${labels.leeFamily}</td><td style="font-weight: 600; color: ${member.isLeeFamilyMember !== false ? '#27ae60' : '#999'};">${leeFamilyStatus}</td></tr>
       ${parentInfo}
       <tr><td>${labels.notes}</td><td>${notes}</td></tr>
