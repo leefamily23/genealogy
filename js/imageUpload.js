@@ -196,31 +196,31 @@ export function initImageUploadUI(formId, memberId = null) {
       
       // File input change handler
       if (fileInput) {
-        fileInput.addEventListener('change', (e) => {
+        fileInput.onchange = (e) => {
           const file = e.target.files[0];
           if (file) {
             previewImage(file, preview);
             if (removeBtn) removeBtn.style.display = 'inline-block';
           }
-        });
+        };
       }
       
       // Upload button handler
       if (uploadBtn) {
-        uploadBtn.addEventListener('click', (e) => {
+        uploadBtn.onclick = (e) => {
           e.preventDefault();
           if (fileInput) {
             fileInput.click();
           }
-        });
+        };
       }
       
       // Remove button handler
       if (removeBtn) {
-        removeBtn.addEventListener('click', (e) => {
+        removeBtn.onclick = (e) => {
           e.preventDefault();
           clearImagePreview(preview, fileInput, removeBtn);
-        });
+        };
       }
     } catch (error) {
       console.error('Error initializing image upload UI:', error);
