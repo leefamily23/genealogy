@@ -22,9 +22,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   initEditForm(reloadTree);
 
   // Initialize build info display (after other initialization)
-  setTimeout(() => {
+  setTimeout(async () => {
     try {
-      initBuildInfo();
+      await initBuildInfo();
     } catch (error) {
       console.warn('Build info initialization failed:', error);
     }
@@ -172,22 +172,16 @@ export function showErrorBanner(message) {
   banner.classList.remove('hidden');
 }
 // ── Build Info Display ────────────────────────────────────────────────────────
-function initBuildInfo() {
+async function initBuildInfo() {
   try {
-    // Simple build info without external import
-    const buildInfo = {
-      version: '1.0.0',
-      shortCommit: '256b688',
-      commitId: '256b6889854763f373c9ab3ce9324c6e0bebe38d',
-      branch: 'main',
-      buildDate: new Date().toISOString(),
-      formattedDate: new Date().toLocaleString()
-    };
+    // Get real-time commit info directly from GitHub API
+    const buildInfo = await fetchLatestCommitFromGitHub();
     
     // Log build info to console
     console.log(`🚀 Family Tree v${buildInfo.version}`);
     console.log(`📦 Commit: ${buildInfo.shortCommit} (${buildInfo.branch})`);
-    console.log(`🕒 Built: ${buildInfo.formattedDate}`);
+    console.log(`🕒 Last Updated: ${buildInfo.formattedDate}`);
+    console.log(`🔗 Source: GitHub API (Live)`);
     
     // Update UI elements
     const versionEl = document.getElementById('build-version');
@@ -199,22 +193,76 @@ function initBuildInfo() {
     
     if (commitEl) {
       commitEl.textContent = buildInfo.shortCommit;
-      commitEl.title = `Commit: ${buildInfo.commitId}\nBranch: ${buildInfo.branch}\nBuilt: ${buildInfo.formattedDate}`;
+      commitEl.title = `Latest Commit from GitHub\nCommit: ${buildInfo.commitId}\nBranch: ${buildInfo.branch}\nDate: ${buildInfo.formattedDate}\nAuthor: ${buildInfo.author}`;
       
       // Make commit clickable to show full info
       commitEl.addEventListener('click', () => {
-        alert(`Family Tree Build Information\n\nVersion: ${buildInfo.version}\nCommit: ${buildInfo.commitId}\nBranch: ${buildInfo.branch}\nBuild Date: ${buildInfo.formattedDate}`);
+        alert(`Family Tree - Live from GitHub\n\nVersion: ${buildInfo.version}\nCommit: ${buildInfo.commitId}\nBranch: ${buildInfo.branch}\nAuthor: ${buildInfo.author}\nDate: ${buildInfo.formattedDate}\n\n✅ This is the REAL latest commit from GitHub!`);
       });
+      
+      // Add visual indicator that it's live from GitHub
+      commitEl.style.cursor = 'pointer';
+      commitEl.title += '\n\n🔴 LIVE from GitHub API';
     }
     
   } catch (error) {
-    console.warn('Could not load build info:', error);
+    console.warn('Could not fetch live commit info from GitHub:', error);
     
     // Fallback display
     const commitEl = document.getElementById('build-commit');
     if (commitEl) {
-      commitEl.textContent = 'dev';
-      commitEl.title = 'Development build';
+      commitEl.textContent = 'offline';
+      commitEl.title = 'Could not connect to GitHub API';
+      commitEl.style.color = '#999';
     }
+  }
+}
+
+/**
+ * Fetch the latest commit information directly from GitHub API
+ * This ensures we always show the REAL latest commit, not hardcoded values
+ */
+async function fetchLatestCommitFromGitHub() {
+  // GitHub repository information - YOUR ACTUAL REPO
+  const GITHUB_USER = 'leefamily23'; // Your GitHub username
+  const GITHUB_REPO = 'genealogy';   // Your repository name  
+  const GITHUB_BRANCH = 'main';      // Your main branch name
+  
+  try {
+    // Fetch latest commit from GitHub API
+    const apiUrl = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/commits/${GITHUB_BRANCH}`;
+    
+    console.log(`🔍 Fetching latest commit from: ${apiUrl}`);
+    
+    const response = await fetch(apiUrl);
+    
+    if (!response.ok) {
+      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const commitData = await response.json();
+    
+    // Extract commit information
+    const commitId = commitData.sha;
+    const shortCommit = commitId.substring(0, 7);
+    const commitDate = new Date(commitData.commit.author.date);
+    const author = commitData.commit.author.name;
+    const message = commitData.commit.message;
+    
+    return {
+      version: '1.0.0',
+      commitId: commitId,
+      shortCommit: shortCommit,
+      branch: GITHUB_BRANCH,
+      author: author,
+      message: message,
+      buildDate: commitDate.toISOString(),
+      formattedDate: commitDate.toLocaleString(),
+      source: 'GitHub API'
+    };
+    
+  } catch (error) {
+    console.error('❌ Failed to fetch from GitHub API:', error);
+    throw error;
   }
 }
