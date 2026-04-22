@@ -121,8 +121,8 @@ export function onAuthStateChange(callback) {
       
       if (userDoc.exists()) {
         _currentRole = userDoc.data().role;
-        _currentUser = user;
-        callback(user, _currentRole);
+        _currentUser = { ...user, displayName: userDoc.data().displayName || user.displayName };
+        callback(_currentUser, _currentRole);
       } else {
         // Check for pending invite
         const pendingQuery = query(
@@ -139,10 +139,14 @@ export function onAuthStateChange(callback) {
           const { setDoc, deleteDoc } = await import(
             'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'
           );
+
+          // Ask user for their preferred display name
+          const chosenName = await promptUsername(user.displayName || user.email);
+
           await setDoc(doc(db, 'users', user.uid), {
             uid: user.uid,
             email: user.email,
-            displayName: user.displayName || user.email,
+            displayName: chosenName,
             role: pendingData.role || 'editor',
             status: 'active',
             createdAt: pendingData.createdAt
@@ -187,6 +191,34 @@ export function getCurrentUser() {
 // ── UI helpers ────────────────────────────────────────────────────────────────
 
 function showAuthError(message) {
-  // Dispatch to the global error banner handler in app.js
   document.dispatchEvent(new CustomEvent('show-error', { detail: message }));
+}
+
+/**
+ * Show username prompt modal for first-time sign-in.
+ * Resolves with the chosen display name.
+ */
+export function promptUsername(defaultName) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('username-modal');
+    const input = document.getElementById('username-input');
+    const btn   = document.getElementById('username-confirm');
+    if (!modal || !input || !btn) { resolve(defaultName); return; }
+
+    input.value = defaultName || '';
+    modal.classList.remove('hidden');
+    input.focus();
+
+    const confirm = () => {
+      const name = input.value.trim();
+      if (!name) { input.style.borderColor = '#e74c3c'; return; }
+      modal.classList.add('hidden');
+      btn.onclick = null;
+      input.onkeydown = null;
+      resolve(name);
+    };
+
+    btn.onclick = confirm;
+    input.onkeydown = (e) => { if (e.key === 'Enter') confirm(); };
+  });
 }

@@ -152,6 +152,11 @@
           </label>
         </div>
 
+        <!-- Row 4: Hometown -->
+        <label>籍贯 (Hometown)
+          <input type="text" id="f-hometown" placeholder="e.g. 福建, 广东, 福州" />
+        </label>
+
         <label>备注
           <textarea id="f-notes" rows="2" placeholder="任何备注..."></textarea>
         </label>
@@ -192,6 +197,18 @@
       <button id="image-viewer-close" style="position: absolute; top: -40px; right: 0; background: rgba(255,255,255,0.2); color: white; border: none; font-size: 30px; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s;">✕</button>
       <img id="image-viewer-img" src="" alt="Full size" style="max-width: 100%; max-height: 90vh; object-fit: contain; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);" />
       <div id="image-viewer-name" style="color: white; font-size: 18px; font-weight: bold; margin-top: 15px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);"></div>
+    </div>
+  </div>
+
+  <!-- Username Prompt Modal (shown on first sign-in) -->
+  <div id="username-modal" class="hidden modal-overlay" style="z-index: 9998;">
+    <div class="modal-card" style="max-width: 380px; text-align: center;">
+      <div style="font-size: 2rem; margin-bottom: 8px;">👋</div>
+      <h3 style="margin-bottom: 6px;">欢迎！设置你的名字</h3>
+      <p style="font-size: 0.85rem; color: #666; margin-bottom: 16px;">这个名字会显示在编辑记录中</p>
+      <input type="text" id="username-input" placeholder="输入你的名字" 
+             style="width:100%; padding: 10px; border: 2px solid #8b1a1a; border-radius: 8px; font-size: 1rem; text-align: center; outline: none; margin-bottom: 12px;" />
+      <button id="username-confirm" class="btn-save" style="width: 100%; padding: 10px; font-size: 1rem;">确认</button>
     </div>
   </div>
 

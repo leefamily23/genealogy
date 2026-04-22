@@ -1,4 +1,4 @@
-import { signIn, signOut, onAuthStateChange, handleRedirectResult } from './auth.js';
+import { signIn, signOut, onAuthStateChange, handleRedirectResult, promptUsername } from './auth.js';
 import { getAllMembers }                        from './db.js';
 import { renderTree, renderDetailPanel }        from './tree.js';
 import { initEditForm, openAddForm, openEditForm, openAddSpouseForm, openAddFormWithSpouse, openAddParentForm, handleDelete } from './editForm.js';
@@ -195,6 +195,9 @@ function updateAuthUI(user, role) {
     if (userDisplay) {
       userDisplay.textContent = user.displayName || user.email;
       userDisplay.classList.remove('hidden');
+      userDisplay.title = '点击修改显示名字';
+      userDisplay.style.cursor = 'pointer';
+      userDisplay.onclick = () => changeDisplayName(user);
     }
     if (role === 'admin') {
       btnManage?.classList.remove('hidden');
@@ -397,6 +400,23 @@ async function fetchLatestCommitFromGitHub() {
     throw error;
   }
 }
+// ── Change Display Name ───────────────────────────────────────────────────────
+async function changeDisplayName(user) {
+  const { updateDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+  const { db } = await import('./firebase-config.js');
+  const newName = await promptUsername(user.displayName || '');
+  if (!newName) return;
+  try {
+    await updateDoc(doc(db, 'users', user.uid), { displayName: newName });
+    const userDisplay = document.getElementById('user-display-name');
+    if (userDisplay) userDisplay.textContent = newName;
+    // Update cached user display name
+    user.displayName = newName;
+  } catch (err) {
+    console.error('Failed to update display name:', err);
+  }
+}
+
 // ── Mobile Sidebar ────────────────────────────────────────────────────────────
 window.openMobileSidebar = function() {
   document.getElementById('left-sidebar')?.classList.add('mobile-open');

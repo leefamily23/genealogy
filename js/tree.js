@@ -575,6 +575,7 @@ export function renderDetailPanel(member, role, allMembers = []) {
     no: '✗ 否',
     parent: '父',
     otherParent: '母',
+    hometown: '籍贯',
     notes: '备注',
     addChild: '➕ 添加子女',
     addParent: '⬆️ 添加父母',
@@ -675,6 +676,7 @@ export function renderDetailPanel(member, role, allMembers = []) {
       ${member.death ? `<tr><td>${labels.died}</td><td>${member.death}</td></tr>` : ''}
       <tr><td>${labels.leeFamily}</td><td style="font-weight: 600; color: ${member.isLeeFamilyMember !== false ? '#27ae60' : '#999'};">${leeFamilyStatus}</td></tr>
       ${parentInfo}
+      ${member.hometown ? `<tr><td>${labels.hometown}</td><td>${member.hometown}</td></tr>` : ''}
       <tr><td>${labels.notes}</td><td>${notes}</td></tr>
     </table>
     ${canEdit ? `
