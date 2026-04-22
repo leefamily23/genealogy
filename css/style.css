@@ -45,6 +45,8 @@ header .subtitle { font-size: 0.8rem; opacity: 0.85; flex: 1; white-space: nowra
   font-weight: 600;
   transition: all 0.3s;
   white-space: nowrap;
+  min-width: 200px; /* Fixed minimum width */
+  text-align: center;
 }
 
 .tab-btn:hover {
@@ -70,6 +72,8 @@ header .subtitle { font-size: 0.8rem; opacity: 0.85; flex: 1; white-space: nowra
   font-size: 0.78rem;
   transition: background 0.2s;
   white-space: nowrap;
+  min-width: 45px; /* Fixed minimum width for control buttons */
+  text-align: center;
 }
 .controls button:hover, .auth-controls button:hover {
   background: rgba(255,255,255,0.3);
@@ -88,9 +92,9 @@ header .subtitle { font-size: 0.8rem; opacity: 0.85; flex: 1; white-space: nowra
   white-space: nowrap;
 }
 
-.btn-signin  { background: rgba(255,255,255,0.25) !important; font-weight: 600; }
-.btn-signout { background: rgba(0,0,0,0.2) !important; }
-.btn-manage  { background: rgba(255,255,255,0.2) !important; }
+.btn-signin  { background: rgba(255,255,255,0.25) !important; font-weight: 600; min-width: 160px; }
+.btn-signout { background: rgba(0,0,0,0.2) !important; min-width: 80px; }
+.btn-manage  { background: rgba(255,255,255,0.2) !important; min-width: 130px; }
 
 /* ── Error Banner ─────────────────────────────────────────── */
 #error-banner {
