@@ -180,7 +180,7 @@ export function initUserManagement() {
 
         // Send invite email via EmailJS
         try {
-          await emailjs.send('service_cbrph9q', 'template_rnqpks', {
+          await emailjs.send('service_cbrph9q', 'template_rnqpksu', {
             to_email:   email,
             invited_by: actorName,
           });
