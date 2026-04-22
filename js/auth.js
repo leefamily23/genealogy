@@ -22,7 +22,6 @@ let _currentUser = null;
 export async function signIn() {
   try {
     const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' }); // Force account selection
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
     if (isMobile) {
@@ -75,10 +74,14 @@ export async function handleRedirectResult() {
       const { setDoc, deleteDoc } = await import(
         'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'
       );
+
+      // Ask user for their preferred display name
+      const chosenName = await promptUsername(user.displayName || user.email);
+
       await setDoc(doc(db, 'users', user.uid), {
         uid: user.uid,
         email: user.email,
-        displayName: user.displayName || user.email,
+        displayName: chosenName,
         role: pendingData.role || 'editor',
         status: 'active',
         createdAt: pendingData.createdAt
