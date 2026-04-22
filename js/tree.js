@@ -748,7 +748,6 @@ export function renderDetailPanel(member, role, allMembers = []) {
       <tr><td>${labels.gender}</td><td>${gender}</td></tr>
       <tr><td>${labels.born}</td><td>${birth}</td></tr>
       ${member.death ? `<tr><td>${labels.died}</td><td>${member.death}</td></tr>` : ''}
-      <tr><td>${labels.leeFamily}</td><td style="font-weight: 600; color: ${member.isLeeFamilyMember !== false ? '#27ae60' : '#999'};">${leeFamilyStatus}</td></tr>
       ${parentInfo}
       ${member.hometown ? `<tr><td>${labels.hometown}</td><td>${member.hometown}</td></tr>` : ''}
       ${member.nationality ? `<tr><td>${labels.nationality}</td><td>${countryFlag(member.nationality)} ${member.nationality}</td></tr>` : ''}
@@ -763,6 +762,88 @@ export function renderDetailPanel(member, role, allMembers = []) {
       ${!hasChildren ? `<button class="btn-action btn-delete" data-id="${member.id}" data-name="${member.name}">${labels.delete}</button>` : ''}
     </div>` : ''}
   `;
+}
+
+/**
+ * Export the current tree view as PNG image
+ */
+export async function exportTreeAsImage() {
+  try {
+    const svgElement = document.getElementById('tree-svg');
+    if (!svgElement) {
+      alert('❌ 无法找到家族树');
+      return;
+    }
+
+    // Get SVG dimensions and current transform
+    const bbox = group.node().getBBox();
+    const transform = d3.zoomTransform(svgElement);
+    
+    // Calculate dimensions with padding
+    const padding = 50;
+    const width = (bbox.width + padding * 2) * transform.k;
+    const height = (bbox.height + padding * 2) * transform.k;
+    
+    // Clone SVG for export
+    const clonedSvg = svgElement.cloneNode(true);
+    clonedSvg.setAttribute('width', width);
+    clonedSvg.setAttribute('height', height);
+    
+    // Apply transform to center the content
+    const g = clonedSvg.querySelector('g');
+    if (g) {
+      const translateX = -bbox.x * transform.k + padding * transform.k;
+      const translateY = -bbox.y * transform.k + padding * transform.k;
+      g.setAttribute('transform', `translate(${translateX}, ${translateY}) scale(${transform.k})`);
+    }
+    
+    // Convert SVG to string
+    const serializer = new XMLSerializer();
+    const svgString = serializer.serializeToString(clonedSvg);
+    
+    // Create canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    
+    // White background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    
+    // Create image from SVG
+    const img = new Image();
+    const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      
+      // Download as PNG
+      canvas.toBlob((blob) => {
+        const link = document.createElement('a');
+        const timestamp = new Date().toISOString().split('T')[0];
+        link.download = `lee-family-tree-${timestamp}.png`;
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        URL.revokeObjectURL(link.href);
+        
+        alert('✅ 家族树已导出为图片');
+      }, 'image/png');
+    };
+    
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      alert('❌ 导出失败，请重试');
+    };
+    
+    img.src = url;
+    
+  } catch (error) {
+    console.error('Export error:', error);
+    alert(`❌ 导出失败: ${error.message}`);
+  }
 }
 
 /**
