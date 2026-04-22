@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>Fix Spouse Bug</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    button {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+    .info {
+      background: #f0f0f0;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    .success {
+      background: #d4edda;
+      color: #155724;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔧 Fix Spouse Bug (Member ID: 30)</h1>
+  
+  <div class="info">
+    <p><strong>Problem:</strong> Member ID 30 (李宇翔) has ID 31 (李谭胜父) in their spouses array.</p>
+    <p><strong>Issue:</strong> ID 31 is the PARENT, not a spouse!</p>
+    <p><strong>Solution:</strong> Remove ID 31 from member 30's spouses array.</p>
+  </div>
+  
+  <button id="fixSpouse">🔧 Remove Incorrect Spouse Reference</button>
+  
+  <div id="result"></div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getFirestore, doc, updateDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAdVk1FlwZFawFOw1V_IO1r1qBi5sHXIZs",
+      authDomain: "leefamilygenealogy.firebaseapp.com",
+      projectId: "leefamilygenealogy",
+      storageBucket: "leefamilygenealogy.firebasestorage.app",
+      messagingSenderId: "142758582489",
+      appId: "1:142758582489:web:ddb1e5cc386c5b94d886c8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    document.getElementById('fixSpouse').addEventListener('click', async () => {
+      const result = document.getElementById('result');
+      result.innerHTML = '<p>Fixing spouse data for member ID 30...</p>';
+      
+      try {
+        // Get current data
+        const docRef = doc(db, 'family', '30');
+        const docSnap = await getDoc(docRef);
+        
+        if (!docSnap.exists()) {
+          throw new Error('Member ID 30 not found');
+        }
+        
+        const currentData = docSnap.data();
+        result.innerHTML += `<p>Current spouses: ${JSON.stringify(currentData.spouses)}</p>`;
+        
+        // Remove ID 31 from spouses array
+        const updatedSpouses = (currentData.spouses || []).filter(id => id !== '31');
+        
+        // Update the document
+        await updateDoc(docRef, {
+          spouses: updatedSpouses
+        });
+        
+        result.innerHTML += '<div class="success"><strong>✅ Success!</strong><br>Removed ID 31 from member 30\'s spouses array.<br>Updated spouses: ' + JSON.stringify(updatedSpouses) + '<br><br>You can now close this page and refresh the main family tree page.</div>';
+      } catch (error) {
+        result.innerHTML = `<div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 4px;"><strong>❌ Error:</strong><br>${error.message}</div>`;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,11 +1,10 @@
 import { signIn, signOut, onAuthStateChange, handleRedirectResult } from './auth.js';
 import { getAllMembers }                        from './db.js';
 import { renderTree, renderDetailPanel }        from './tree.js';
-import { initEditForm, openAddForm, openEditForm, openAddSpouseForm, openAddFormWithSpouse, handleDelete } from './editForm.js';
+import { initEditForm, openAddForm, openEditForm, openAddSpouseForm, openAddFormWithSpouse, openAddParentForm, handleDelete } from './editForm.js';
 import { startHistoryPanel, stopHistoryPanel, initHistoryToggle } from './historyPanel.js';
 import { openUserManagement, initUserManagement } from './userManagement.js';
 import { applyTranslations } from './translations.js';
-import { initImageViewer } from './imageViewer.js';
 import './migrate.js'; // exposes window.migrateToFirestore
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -24,7 +23,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   initHistoryToggle();
   initUserManagement();
   initEditForm(reloadTree);
-  initImageViewer();
   
   // Apply initial translations (Chinese by default)
   applyTranslations(_currentLanguage);
@@ -215,10 +213,16 @@ function wireDetailActions(member) {
   const detailContent = document.getElementById('sidebar-detail-content');
   if (!detailContent) return;
   
+  const addParentBtn = detailContent.querySelector('.btn-add-parent');
   const addChildBtn = detailContent.querySelector('.btn-add-child');
   const addSpouseBtn = detailContent.querySelector('.btn-add-spouse');
   const editBtn = detailContent.querySelector('.btn-edit');
   const deleteBtn = detailContent.querySelector('.btn-delete');
+  
+  // Add parent button (only for root members)
+  if (addParentBtn) {
+    addParentBtn.onclick = () => openAddParentForm(member.id);
+  }
   
   // Add event listeners directly without cloning (more efficient)
   if (addChildBtn) {

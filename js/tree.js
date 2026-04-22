@@ -1,5 +1,3 @@
-import { openImageViewer } from './imageViewer.js';
-
 // ── Config ────────────────────────────────────────────────────────────────────
 const NODE_WIDTH = 100;
 const NODE_HEIGHT = 140;
@@ -71,6 +69,23 @@ export function renderTree(members, role) {
   try {
     console.log('📊 Processing family lineage...');
     
+    // Validate data integrity first
+    const orphanedMembers = members.filter(m => {
+      if (m.parentId) {
+        const parentExists = members.some(p => p.id === m.parentId);
+        if (!parentExists) {
+          console.error(`❌ Member "${m.name}" (ID: ${m.id}) has parentId "${m.parentId}" but parent doesn't exist!`);
+          return true;
+        }
+      }
+      return false;
+    });
+    
+    if (orphanedMembers.length > 0) {
+      const orphanNames = orphanedMembers.map(m => `${m.name} (ID: ${m.id}, parentId: ${m.parentId})`).join(', ');
+      throw new Error(`Found ${orphanedMembers.length} members with missing parents: ${orphanNames}. Please fix the data or remove the invalid parentId.`);
+    }
+    
     // Find the main family lineage (members with parentId relationships)
     const mainLineage = members.filter(member => {
       // Include if they have a parentId (they're children)
@@ -93,13 +108,11 @@ export function renderTree(members, role) {
 
     console.log(`📈 Main lineage: ${mainLineage.length} members`);
 
-    // If no main lineage found, include the first root member
+    // If no main lineage found, include all root members
     if (mainLineage.length === 0) {
-      const rootMember = members.find(m => !m.parentId);
-      if (rootMember) {
-        mainLineage.push(rootMember);
-        console.log('🌱 Added root member to empty lineage');
-      }
+      const rootMembers = members.filter(m => !m.parentId);
+      mainLineage.push(...rootMembers);
+      console.log('🌱 Added root members to empty lineage');
     }
 
     // Safety check: ensure we have valid data for stratify
@@ -116,7 +129,10 @@ export function renderTree(members, role) {
   } catch (err) {
     console.error('Tree stratify error:', err);
     container.innerHTML =
-      `<p style="padding:40px;color:#c0392b">Tree error: ${err.message}</p>`;
+      `<p style="padding:40px;color:#c0392b;font-size:14px;line-height:1.6">
+        <strong>Tree error:</strong><br>${err.message}<br><br>
+        <strong>Solution:</strong> Please check the database for members with invalid parent references.
+      </p>`;
     return;
   }
 
@@ -173,7 +189,9 @@ export function renderTree(members, role) {
     .join('g')
     .attr('class', d => `node ${d.data.gender || 'unknown'}`)
     .attr('transform', d => `translate(${d.x},${d.y})`)
+    .style('cursor', 'pointer')
     .on('click', (event, d) => {
+      console.log('Node clicked:', d.data.name);
       document.dispatchEvent(
         new CustomEvent('member-selected', { detail: d.data })
       );
@@ -194,7 +212,8 @@ export function renderTree(members, role) {
       .attr('ry', 12)
       .attr('fill', getNodeColor(member.gender))
       .attr('stroke', '#fff')
-      .attr('stroke-width', 2);
+      .attr('stroke-width', 2)
+      .style('cursor', 'pointer');
     
     // Photo rectangle background (white rectangle for photo)
     const photoY = -NODE_HEIGHT/2 + 35;
@@ -242,16 +261,13 @@ export function renderTree(members, role) {
           .attr('href', member.imageURL)
           .style('opacity', 0)
           .style('cursor', 'pointer')
+          .style('pointer-events', 'none')
           .on('load', function() {
             d3.select(this).transition().duration(300).style('opacity', 1);
           })
           .on('error', function() {
             console.warn(`Image failed to load for ${member.name}`);
             d3.select(this).remove();
-          })
-          .on('click', function(event) {
-            event.stopPropagation(); // Prevent node click event
-            openImageViewer(member.imageURL, member.name);
           });
       } catch (error) {
         console.warn('Error adding image to card:', error);
@@ -408,7 +424,9 @@ export function renderTree(members, role) {
     .join('g')
     .attr('class', d => `spouse-node node ${d.data.gender || 'unknown'}`)
     .attr('transform', d => `translate(${d.x},${d.y})`)
+    .style('cursor', 'pointer')
     .on('click', (event, d) => {
+      console.log('Spouse node clicked:', d.data.name);
       document.dispatchEvent(
         new CustomEvent('member-selected', { detail: d.data })
       );
@@ -477,16 +495,13 @@ export function renderTree(members, role) {
           .attr('href', member.imageURL)
           .style('opacity', 0)
           .style('cursor', 'pointer')
+          .style('pointer-events', 'none')
           .on('load', function() {
             d3.select(this).transition().duration(300).style('opacity', 1);
           })
           .on('error', function() {
             console.warn(`Spouse image failed to load for ${member.name}`);
             d3.select(this).remove();
-          })
-          .on('click', function(event) {
-            event.stopPropagation(); // Prevent node click event
-            openImageViewer(member.imageURL, member.name);
           });
       } catch (error) {
         console.warn('Error adding image to spouse card:', error);
@@ -563,6 +578,7 @@ export function renderDetailPanel(member, role, allMembers = []) {
     otherParent: '母',
     notes: '备注',
     addChild: '➕ 添加子女',
+    addParent: '⬆️ 添加父母',
     addSpouse: '💑 添加配偶',
     edit: '✏️ 编辑',
     delete: '🗑️ 删除'
@@ -578,6 +594,7 @@ export function renderDetailPanel(member, role, allMembers = []) {
 
   const canEdit = role === 'editor' || role === 'admin';
   const hasChildren = allMembers.some(m => m.parentId === member.id);
+  const hasParent = !!member.parentId; // Check if member already has a parent
   
   // Find parent information if this member has a parent
   let parentInfo = '';
@@ -643,8 +660,7 @@ export function renderDetailPanel(member, role, allMembers = []) {
       ${member.imageURL ? `
         <div style="flex-shrink: 0;">
           <img src="${member.imageURL}" alt="${member.name}" 
-               class="detail-panel-image"
-               style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover; border: 3px solid #8b1a1a; box-shadow: 0 2px 8px rgba(0,0,0,0.2); cursor: pointer;"
+               style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover; border: 3px solid #8b1a1a; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"
                onerror="this.style.display='none'">
         </div>
       ` : ''}
@@ -663,22 +679,13 @@ export function renderDetailPanel(member, role, allMembers = []) {
     </table>
     ${canEdit ? `
     <div class="detail-actions">
+      ${!hasParent ? `<button class="btn-action btn-add-parent" data-id="${member.id}">${labels.addParent}</button>` : ''}
       <button class="btn-action btn-add-child" data-id="${member.id}">${labels.addChild}</button>
       <button class="btn-action btn-add-spouse" data-id="${member.id}">${labels.addSpouse}</button>
       <button class="btn-action btn-edit" data-id="${member.id}">${labels.edit}</button>
       ${!hasChildren ? `<button class="btn-action btn-delete" data-id="${member.id}" data-name="${member.name}">${labels.delete}</button>` : ''}
     </div>` : ''}
   `;
-  
-  // Add click handler for detail panel image
-  if (member.imageURL) {
-    const detailImage = content.querySelector('.detail-panel-image');
-    if (detailImage) {
-      detailImage.addEventListener('click', () => {
-        openImageViewer(member.imageURL, member.name);
-      });
-    }
-  }
 }
 
 /**

@@ -43,6 +43,39 @@ export function validateMemberName(name) {
 }
 
 /**
+ * Open the edit form in "Add Parent" mode.
+ * @param {string} childId - The child whose parent we're adding
+ */
+export function openAddParentForm(childId) {
+  resetForm();
+  document.getElementById('f-parent-id').value = ''; // Parent has no parent (will become new root)
+  document.getElementById('f-id').value = '';
+  document.getElementById('modal-title').textContent = 'Add Parent (添加父母)';
+  
+  // Parents are typically Lee family members
+  document.getElementById('f-lee-family-member').checked = true;
+  
+  // Hide spouse selection
+  const spouseContainer = document.getElementById('spouse-selection-container');
+  if (spouseContainer) {
+    spouseContainer.classList.add('hidden');
+  }
+  
+  // Store the child ID so we can update the child's parentId after creating the parent
+  const form = document.getElementById('member-form');
+  form.dataset.childId = childId;
+  
+  // Initialize image upload UI
+  try {
+    initImageUploadUI('member-form');
+  } catch (error) {
+    console.error('Image upload UI initialization failed:', error);
+  }
+  
+  document.getElementById('edit-modal').classList.remove('hidden');
+}
+
+/**
  * Open the edit form in "Add Spouse" mode.
  * @param {string} memberId - The member to add spouse to
  */
@@ -277,7 +310,13 @@ export function closeForm() {
 
 function resetForm() {
   const form = document.getElementById('member-form');
-  if (form) form.reset();
+  if (form) {
+    form.reset();
+    // Always clear all dataset values to prevent stale data carrying over
+    delete form.dataset.spouseOf;
+    delete form.dataset.childId;
+    delete form.dataset.childSpouseContext;
+  }
   const errEl = document.getElementById('f-name-error');
   if (errEl) errEl.textContent = '';
   
@@ -423,6 +462,20 @@ export function initEditForm(onSaved) {
         const newMemberId = await db.addMember(memberData);
         memberId = newMemberId;
         
+        // If this is a parent being added (childId is set), update the child's parentId
+        const childId = form.dataset.childId;
+        if (childId) {
+          console.log(`🔗 Linking child ${childId} to new parent ${newMemberId}`);
+          try {
+            await db.updateMember(childId, { parentId: newMemberId });
+            console.log(`✅ Successfully linked child ${childId} to parent ${newMemberId}`);
+          } catch (linkError) {
+            console.error(`❌ Failed to link child to parent:`, linkError);
+            alert(`父母已创建，但链接失败。请手动编辑子女的父母信息。`);
+          }
+          delete form.dataset.childId;
+        }
+        
         // If this is a spouse (NOT a child), update the original member to reference the new spouse
         if (spouseOf && !parentId) {
           // Get the original member's current spouses
@@ -436,11 +489,13 @@ export function initEditForm(onSaved) {
           }
         }
         
-        const description = spouseOf 
-          ? `added spouse ${member.name}` 
-          : selectedSpouse 
-            ? `added child ${member.name} (with selected spouse)`
-            : `added ${member.name}`;
+        const description = childId
+          ? `added parent ${member.name}`
+          : spouseOf 
+            ? `added spouse ${member.name}` 
+            : selectedSpouse 
+              ? `added child ${member.name} (with selected spouse)`
+              : `added ${member.name}`;
         
         await db.addHistoryEntry({
           actorUid:           user?.uid || '',
