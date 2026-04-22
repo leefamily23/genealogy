@@ -7,7 +7,7 @@ export const translations = {
     
     // Tabs
     tabGenealogy: '族谱 (李氏)',
-    tabFamilyTree: '家族树 (全部)',
+    tabFamilyTree: '家族树',
     
     // Controls
     btnZoomIn: '放大',
