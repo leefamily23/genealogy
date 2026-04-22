@@ -1,5 +1,34 @@
 import * as db from './db.js';
 import { getCurrentUser } from './auth.js';
+import { 
+  initImageUploadUI, 
+  getSelectedImageFile, 
+  uploadMemberImage, 
+  showUploadProgress,
+  deleteMemberImage 
+} from './imageUpload.js';
+
+/**
+ * Get the next member ID for preview (used for image upload before member creation)
+ * @returns {Promise<string>}
+ */
+async function getNextMemberIdPreview() {
+  try {
+    const members = await db.getAllMembers();
+    const existingIds = members.map(m => m.id);
+    
+    // Filter numeric IDs and find the highest one
+    const numericIds = existingIds
+      .filter(id => /^\d+$/.test(id))
+      .map(id => parseInt(id, 10));
+    
+    const maxId = numericIds.length > 0 ? Math.max(...numericIds) : 0;
+    return String(maxId + 1);
+  } catch (err) {
+    // Fallback to timestamp-based ID if there's an error
+    return String(Date.now());
+  }
+}
 
 /**
  * Validate a member name — must be non-empty after trimming.
@@ -29,6 +58,77 @@ export function openAddSpouseForm(memberId) {
   // Store the original member ID for linking after creation
   const form = document.getElementById('member-form');
   form.dataset.spouseOf = memberId;
+  
+  // Initialize image upload UI (with error handling)
+  console.log('🔧 About to initialize image upload UI for openAddSpouseForm');
+  try {
+    initImageUploadUI('member-form');
+  } catch (error) {
+    console.error('❌ Image upload UI initialization failed:', error);
+  }
+  
+  document.getElementById('edit-modal').classList.remove('hidden');
+}
+
+/**
+ * Open the edit form in "Add Child" mode with a pre-selected spouse.
+ * @param {string} parentId - Primary parent ID (main lineage member)
+ * @param {string} spouseId - Pre-selected spouse ID
+ * @param {object[]} allMembers - All family members
+ */
+export function openAddFormWithSpouse(parentId, spouseId, allMembers = []) {
+  resetForm();
+  document.getElementById('f-parent-id').value = parentId || '';
+  document.getElementById('f-id').value = '';
+  document.getElementById('modal-title').textContent = 'Add Child';
+  
+  // Auto-check Lee family member for children (they inherit family membership)
+  if (parentId && allMembers.length > 0) {
+    const parent = allMembers.find(m => m.id === parentId);
+    if (parent && parent.isLeeFamilyMember) {
+      document.getElementById('f-lee-family-member').checked = true;
+    } else {
+      document.getElementById('f-lee-family-member').checked = false;
+    }
+  } else {
+    document.getElementById('f-lee-family-member').checked = true; // Default to checked
+  }
+  
+  // Set up spouse selection with the pre-selected spouse
+  const spouseContainer = document.getElementById('spouse-selection-container');
+  const spouseSelect = document.getElementById('f-spouse-selection');
+  
+  if (parentId && allMembers.length > 0) {
+    const parent = allMembers.find(m => m.id === parentId);
+    
+    if (parent && parent.spouses && Array.isArray(parent.spouses) && parent.spouses.length > 0) {
+      // Parent has spouses - show the selection dropdown
+      spouseSelect.innerHTML = '<option value="">-- Select Spouse --</option>';
+      
+      parent.spouses.forEach(currentSpouseId => {
+        const spouse = allMembers.find(m => m.id === currentSpouseId);
+        if (spouse) {
+          const option = document.createElement('option');
+          option.value = currentSpouseId;
+          option.textContent = `${spouse.name} ${spouse.chinese ? '(' + spouse.chinese + ')' : ''}`;
+          
+          // Pre-select the clicked spouse
+          if (currentSpouseId === spouseId) {
+            option.selected = true;
+          }
+          
+          spouseSelect.appendChild(option);
+        }
+      });
+      
+      spouseContainer.classList.remove('hidden');
+    } else {
+      // No spouses - hide the selection
+      spouseContainer.classList.add('hidden');
+    }
+  } else {
+    spouseContainer.classList.add('hidden');
+  }
   
   document.getElementById('edit-modal').classList.remove('hidden');
 }
@@ -91,6 +191,14 @@ export function openAddForm(parentId, allMembers = []) {
     spouseContainer.classList.add('hidden');
   }
   
+  // Initialize image upload UI (with error handling)
+  console.log('🔧 About to initialize image upload UI for openAddForm');
+  try {
+    initImageUploadUI('member-form');
+  } catch (error) {
+    console.error('❌ Image upload UI initialization failed:', error);
+  }
+  
   document.getElementById('edit-modal').classList.remove('hidden');
 }
 
@@ -118,6 +226,14 @@ export function openEditForm(member) {
   const spouseContainer = document.getElementById('spouse-selection-container');
   if (spouseContainer) {
     spouseContainer.classList.add('hidden');
+  }
+  
+  // Initialize image upload UI (with error handling)
+  console.log('🔧 About to initialize image upload UI for openEditForm');
+  try {
+    initImageUploadUI('member-form', member.id);
+  } catch (error) {
+    console.error('❌ Image upload UI initialization failed:', error);
   }
   
   document.getElementById('edit-modal').classList.remove('hidden');
@@ -194,9 +310,37 @@ export function initEditForm(onSaved) {
     const actorName = user?.displayName || user?.email || 'Unknown';
 
     try {
+      let memberId = id;
+      
       if (id) {
-        // Edit existing
-        await db.updateMember(id, member);
+        // Edit existing member
+        let finalMemberData = { ...member };
+        
+        // Handle image upload for existing member
+        try {
+          const imageFile = getSelectedImageFile('member-form');
+          if (imageFile) {
+            showUploadProgress('member-form', 0);
+            
+            try {
+              const imageURL = await uploadMemberImage(id, imageFile, (progress) => {
+                showUploadProgress('member-form', progress);
+              });
+              
+              // Add image URL to member data
+              finalMemberData.imageURL = imageURL;
+            } catch (imageError) {
+              console.error('Image upload failed:', imageError);
+              alert(`成员信息已保存，但照片上传失败: ${imageError.message}`);
+            }
+          }
+        } catch (error) {
+          console.warn('Image upload functionality not available:', error);
+        }
+        
+        // Update member with all data including image URL
+        await db.updateMember(id, finalMemberData);
+        
         await db.addHistoryEntry({
           actorUid:           user?.uid || '',
           actorName,
@@ -210,15 +354,42 @@ export function initEditForm(onSaved) {
         // Add new member
         const memberData = { ...member };
         
-        // If this is a spouse, add the spouse relationship to the member data before saving
-        if (spouseOf) {
+        // If this is a spouse (NOT a child with selected spouse), add the spouse relationship
+        if (spouseOf && !parentId) {
+          // Only add spouse relationship if this is truly a spouse (no parentId)
           memberData.spouses = [spouseOf]; // Initialize spouses array
         }
         
-        const newMemberId = await db.addMember(memberData);
+        // Handle image upload for new member BEFORE creating the member
+        try {
+          const imageFile = getSelectedImageFile('member-form');
+          if (imageFile) {
+            showUploadProgress('member-form', 0);
+            
+            // Get the next member ID first
+            const tempMemberId = await getNextMemberIdPreview();
+            
+            try {
+              const imageURL = await uploadMemberImage(tempMemberId, imageFile, (progress) => {
+                showUploadProgress('member-form', progress);
+              });
+              
+              // Add image URL to member data
+              memberData.imageURL = imageURL;
+            } catch (imageError) {
+              console.error('Image upload failed:', imageError);
+              alert(`成员已添加，但照片上传失败: ${imageError.message}`);
+            }
+          }
+        } catch (error) {
+          console.warn('Image upload functionality not available:', error);
+        }
         
-        // If this is a spouse, update the original member to reference the new spouse
-        if (spouseOf) {
+        const newMemberId = await db.addMember(memberData);
+        memberId = newMemberId;
+        
+        // If this is a spouse (NOT a child), update the original member to reference the new spouse
+        if (spouseOf && !parentId) {
           // Get the original member's current spouses
           const originalMember = await db.getMember(spouseOf);
           const currentSpouses = originalMember.spouses || [];
@@ -279,6 +450,15 @@ export async function handleDelete(memberId, memberName, hasChildren, onDeleted)
   const actorName = user?.displayName || user?.email || 'Unknown';
 
   try {
+    // Delete member image first (with error handling)
+    try {
+      await deleteMemberImage(memberId);
+    } catch (imageError) {
+      console.warn('Could not delete member image:', imageError);
+      // Continue with member deletion even if image deletion fails
+    }
+    
+    // Delete member data
     await db.deleteMember(memberId);
     await db.addHistoryEntry({
       actorUid:           user?.uid || '',

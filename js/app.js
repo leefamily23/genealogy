@@ -1,7 +1,7 @@
 import { signIn, signOut, onAuthStateChange, handleRedirectResult } from './auth.js';
 import { getAllMembers }                        from './db.js';
 import { renderTree, renderDetailPanel }        from './tree.js';
-import { initEditForm, openAddForm, openEditForm, openAddSpouseForm, handleDelete } from './editForm.js';
+import { initEditForm, openAddForm, openEditForm, openAddSpouseForm, openAddFormWithSpouse, handleDelete } from './editForm.js';
 import { startHistoryPanel, stopHistoryPanel, initHistoryToggle } from './historyPanel.js';
 import { openUserManagement, initUserManagement } from './userManagement.js';
 import { applyTranslations } from './translations.js';
@@ -220,7 +220,36 @@ function wireDetailActions(member) {
   
   // Add event listeners directly without cloning (more efficient)
   if (addChildBtn) {
-    addChildBtn.onclick = () => openAddForm(member.id, _members);
+    addChildBtn.onclick = () => {
+      // Check if this member is a spouse (not in main lineage)
+      const isSpouseOnly = _members.some(m => {
+        if (m.spouses && Array.isArray(m.spouses)) {
+          return m.spouses.includes(member.id);
+        }
+        return m.spouse === member.id;
+      }) && !_members.some(m => m.parentId === member.id) && !member.parentId;
+      
+      if (isSpouseOnly) {
+        // This is a spouse node - find the main lineage member they're married to
+        const mainLineageMember = _members.find(m => {
+          if (m.spouses && Array.isArray(m.spouses)) {
+            return m.spouses.includes(member.id);
+          }
+          return m.spouse === member.id;
+        });
+        
+        if (mainLineageMember) {
+          // Use main lineage member as primary parent, spouse as secondary
+          openAddFormWithSpouse(mainLineageMember.id, member.id, _members);
+        } else {
+          // Fallback to normal behavior
+          openAddForm(member.id, _members);
+        }
+      } else {
+        // Normal member - use as primary parent
+        openAddForm(member.id, _members);
+      }
+    };
   }
 
   if (addSpouseBtn) {

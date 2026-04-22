@@ -60,8 +60,7 @@ function renderEntries(entries) {
 
   list.innerHTML = '';
 
-  const isZh = _currentLanguage === 'zh';
-  const noEditsText = isZh ? '暂无编辑记录' : 'No edits yet.';
+  const noEditsText = '暂无编辑记录';
 
   if (entries.length === 0) {
     list.innerHTML = `<li style="color: #999; text-align: center;">${noEditsText}</li>`;
@@ -71,9 +70,9 @@ function renderEntries(entries) {
   entries.forEach(entry => {
     const li = document.createElement('li');
     li.innerHTML = `
-      <span class="history-actor">${escapeHtml(entry.actorName || (isZh ? '未知' : 'Unknown'))}</span>
+      <span class="history-actor">${escapeHtml(entry.actorName || '未知')}</span>
       <span style="display: block; margin-top: 4px;">${escapeHtml(entry.description || '')}</span>
-      <span class="history-time">${relativeTime(entry.timestamp, isZh)}</span>
+      <span class="history-time">${relativeTime(entry.timestamp, true)}</span>
     `;
     list.appendChild(li);
   });

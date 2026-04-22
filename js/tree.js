@@ -1,9 +1,28 @@
 // ── Config ────────────────────────────────────────────────────────────────────
-const NODE_RADIUS  = 22;
-const NODE_SPACING = { x: 120, y: 160 };
+const NODE_WIDTH = 100;
+const NODE_HEIGHT = 140;
+const NODE_SPACING = { x: 160, y: 200 };
+const PHOTO_RADIUS = 25;
 let   showChinese  = true;
 let   _currentRole = null;
 let   _currentLanguage = 'zh'; // 'zh' or 'en'
+
+// ── Helper Functions ──────────────────────────────────────────────────────────
+/**
+ * Get card background color based on gender
+ * @param {string} gender - 'male', 'female', or 'unknown'
+ * @returns {string} CSS color
+ */
+function getNodeColor(gender) {
+  switch (gender) {
+    case 'male':
+      return '#4a90e2'; // Blue for males
+    case 'female':
+      return '#e24a90'; // Pink for females
+    default:
+      return '#52c4a0'; // Teal for unknown (like your example image)
+  }
+}
 
 // ── Module-level D3 references ────────────────────────────────────────────────
 let svg, group, zoom, nodes;
@@ -126,27 +145,27 @@ export function renderTree(members, role) {
   svg.call(zoom.transform, currentTransform);
 
   // ── Links (parent-child relationships) ────────────────────────────────────
-  // Draw parent-child links with straight orthogonal lines (right angles)
+  // Draw parent-child links connecting card edges
   group.selectAll('.link')
     .data(root.links())
     .join('path')
     .attr('class', 'link')
     .attr('d', d => {
-      // Create orthogonal (right-angle) path instead of curved
+      // Create orthogonal path connecting card edges
       const sourceX = d.source.x;
-      const sourceY = d.source.y;
+      const sourceY = d.source.y + NODE_HEIGHT/2; // Bottom edge of parent card
       const targetX = d.target.x;
-      const targetY = d.target.y;
+      const targetY = d.target.y - NODE_HEIGHT/2; // Top edge of child card
       const midY = (sourceY + targetY) / 2;
       
-      // Path: down from parent, horizontal to child's x, then down to child
+      // Path: down from parent card bottom, horizontal to child's x, then down to child card top
       return `M ${sourceX} ${sourceY} 
               L ${sourceX} ${midY} 
               L ${targetX} ${midY} 
               L ${targetX} ${targetY}`;
     });
 
-  // ── Main family nodes ──────────────────────────────────────────────────────
+  // ── Main family nodes (Card Design) ───────────────────────────────────────────
   nodes = group.selectAll('.node')
     .data(root.descendants())
     .join('g')
@@ -158,21 +177,101 @@ export function renderTree(members, role) {
       );
     });
 
-  nodes.append('circle').attr('r', NODE_RADIUS);
-
-  nodes.append('text')
-    .attr('class', 'name-label')
-    .attr('dy', NODE_RADIUS + 14)
-    .text(d => d.data.name); // Always show Chinese name
-
-  nodes.append('text')
-    .attr('class', 'year-label')
-    .attr('dy', NODE_RADIUS + 26)
-    .text(d => {
-      const b  = d.data.birth || '?';
-      const dd = d.data.death || '';
-      return dd ? `${b}–${dd}` : b;
-    });
+  // Create card-style nodes
+  nodes.each(function(d) {
+    const node = d3.select(this);
+    const member = d.data;
+    
+    // Card background with rounded corners
+    node.append('rect')
+      .attr('x', -NODE_WIDTH/2)
+      .attr('y', -NODE_HEIGHT/2)
+      .attr('width', NODE_WIDTH)
+      .attr('height', NODE_HEIGHT)
+      .attr('rx', 12)
+      .attr('ry', 12)
+      .attr('fill', getNodeColor(member.gender))
+      .attr('stroke', '#fff')
+      .attr('stroke-width', 2);
+    
+    // Photo circle background (white circle for photo)
+    const photoY = -NODE_HEIGHT/2 + 35;
+    node.append('circle')
+      .attr('cx', 0)
+      .attr('cy', photoY)
+      .attr('r', PHOTO_RADIUS + 2)
+      .attr('fill', '#fff')
+      .attr('stroke', 'none');
+    
+    // Add profile image if available
+    if (member.imageURL && member.imageURL.trim() !== '') {
+      try {
+        const defs = svg.select('defs').empty() ? svg.append('defs') : svg.select('defs');
+        const clipId = `clip-${member.id}`;
+        
+        if (defs.select(`#${clipId}`).empty()) {
+          defs.append('clipPath')
+            .attr('id', clipId)
+            .append('circle')
+            .attr('cx', 0)
+            .attr('cy', photoY)
+            .attr('r', PHOTO_RADIUS);
+        }
+        
+        node.append('image')
+          .attr('x', -PHOTO_RADIUS)
+          .attr('y', photoY - PHOTO_RADIUS)
+          .attr('width', PHOTO_RADIUS * 2)
+          .attr('height', PHOTO_RADIUS * 2)
+          .attr('clip-path', `url(#${clipId})`)
+          .attr('href', member.imageURL)
+          .style('opacity', 0)
+          .on('load', function() {
+            d3.select(this).transition().duration(300).style('opacity', 1);
+          })
+          .on('error', function() {
+            d3.select(this).remove();
+          });
+      } catch (error) {
+        console.warn('Error adding image to card:', error);
+      }
+    } else {
+      // Default avatar when no image
+      node.append('text')
+        .attr('x', 0)
+        .attr('y', photoY + 6)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '20px')
+        .attr('fill', '#999')
+        .text('👤');
+    }
+    
+    // Member name (centered, below photo)
+    const nameY = photoY + PHOTO_RADIUS + 20;
+    node.append('text')
+      .attr('x', 0)
+      .attr('y', nameY)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', '11px')
+      .attr('font-weight', 'bold')
+      .attr('fill', '#fff')
+      .text(member.name);
+    
+    // Birth/Death years (at bottom of card)
+    const birth = member.birth || '?';
+    const death = member.death || '';
+    const yearText = death ? `${birth}–${death}` : birth;
+    
+    const yearY = NODE_HEIGHT/2 - 12;
+    node.append('text')
+      .attr('x', 0)
+      .attr('y', yearY)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', '9px')
+      .attr('fill', '#fff')
+      .attr('opacity', 0.9)
+      .text(yearText);
+  });
 
   // ── Add spouses with STRAIGHT LINES ───────────────────────────────────────
   const spouseData = [];
@@ -195,9 +294,6 @@ export function renderTree(members, role) {
           const spouseMember = members.find(m => m.id === spouseId);
           if (spouseMember) {
             // Position spouses to keep main node centered
-            // For 1 spouse: spouse on right (+80)
-            // For 2 spouses: left (-80), right (+80) - main in center
-            // For 3 spouses: left (-160), left (-80), right (+80), right (+160)
             let spouseX;
             
             if (numSpouses === 1) {
@@ -227,10 +323,10 @@ export function renderTree(members, role) {
             };
             spouseData.push(spouseNode);
             
-            // STRAIGHT horizontal marriage link (red dashed line)
+            // STRAIGHT horizontal marriage link connecting card edges
             marriageLinks.push({
-              source: { x: node.x + (spouseX > node.x ? NODE_RADIUS : -NODE_RADIUS), y: node.y },
-              target: { x: spouseX + (spouseX > node.x ? -NODE_RADIUS : NODE_RADIUS), y: node.y },
+              source: { x: node.x + (spouseX > node.x ? NODE_WIDTH/2 : -NODE_WIDTH/2), y: node.y },
+              target: { x: spouseX + (spouseX > node.x ? -NODE_WIDTH/2 : NODE_WIDTH/2), y: node.y },
               spouseId: spouseId,
               memberId: member.id
             });
@@ -258,10 +354,10 @@ export function renderTree(members, role) {
           };
           spouseData.push(spouseNode);
           
-          // STRAIGHT horizontal marriage link (red dashed line)
+          // STRAIGHT horizontal marriage link connecting card edges
           marriageLinks.push({
-            source: { x: node.x + NODE_RADIUS, y: node.y },
-            target: { x: spouseNode.x - NODE_RADIUS, y: node.y },
+            source: { x: node.x + NODE_WIDTH/2, y: node.y },
+            target: { x: spouseNode.x - NODE_WIDTH/2, y: node.y },
             spouseId: member.spouse,
             memberId: member.id
           });
@@ -283,9 +379,9 @@ export function renderTree(members, role) {
     .attr('x2', d => d.target.x)
     .attr('y2', d => d.target.y)
     .attr('stroke', '#e74c3c')
-    .attr('stroke-width', 3); // Solid line (removed dasharray)
+    .attr('stroke-width', 3);
 
-  // Render spouse nodes
+  // Render spouse nodes (same design as main nodes)
   const spouseNodes = group.selectAll('.spouse-node')
     .data(spouseData)
     .join('g')
@@ -297,21 +393,101 @@ export function renderTree(members, role) {
       );
     });
 
-  spouseNodes.append('circle').attr('r', NODE_RADIUS);
-
-  spouseNodes.append('text')
-    .attr('class', 'name-label')
-    .attr('dy', NODE_RADIUS + 14)
-    .text(d => d.data.name); // Always show Chinese name
-
-  spouseNodes.append('text')
-    .attr('class', 'year-label')
-    .attr('dy', NODE_RADIUS + 26)
-    .text(d => {
-      const b  = d.data.birth || '?';
-      const dd = d.data.death || '';
-      return dd ? `${b}–${dd}` : b;
-    });
+  // Create spouse nodes (same card design as main nodes)
+  spouseNodes.each(function(d) {
+    const node = d3.select(this);
+    const member = d.data;
+    
+    // Card background with rounded corners
+    node.append('rect')
+      .attr('x', -NODE_WIDTH/2)
+      .attr('y', -NODE_HEIGHT/2)
+      .attr('width', NODE_WIDTH)
+      .attr('height', NODE_HEIGHT)
+      .attr('rx', 12)
+      .attr('ry', 12)
+      .attr('fill', getNodeColor(member.gender))
+      .attr('stroke', '#fff')
+      .attr('stroke-width', 2);
+    
+    // Photo circle background (white circle for photo)
+    const photoY = -NODE_HEIGHT/2 + 35;
+    node.append('circle')
+      .attr('cx', 0)
+      .attr('cy', photoY)
+      .attr('r', PHOTO_RADIUS + 2)
+      .attr('fill', '#fff')
+      .attr('stroke', 'none');
+    
+    // Add profile image if available
+    if (member.imageURL && member.imageURL.trim() !== '') {
+      try {
+        const defs = svg.select('defs').empty() ? svg.append('defs') : svg.select('defs');
+        const clipId = `clip-spouse-${member.id}`;
+        
+        if (defs.select(`#${clipId}`).empty()) {
+          defs.append('clipPath')
+            .attr('id', clipId)
+            .append('circle')
+            .attr('cx', 0)
+            .attr('cy', photoY)
+            .attr('r', PHOTO_RADIUS);
+        }
+        
+        node.append('image')
+          .attr('x', -PHOTO_RADIUS)
+          .attr('y', photoY - PHOTO_RADIUS)
+          .attr('width', PHOTO_RADIUS * 2)
+          .attr('height', PHOTO_RADIUS * 2)
+          .attr('clip-path', `url(#${clipId})`)
+          .attr('href', member.imageURL)
+          .style('opacity', 0)
+          .on('load', function() {
+            d3.select(this).transition().duration(300).style('opacity', 1);
+          })
+          .on('error', function() {
+            d3.select(this).remove();
+          });
+      } catch (error) {
+        console.warn('Error adding image to spouse card:', error);
+      }
+    } else {
+      // Default avatar when no image
+      node.append('text')
+        .attr('x', 0)
+        .attr('y', photoY + 6)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '20px')
+        .attr('fill', '#999')
+        .text('👤');
+    }
+    
+    // Member name (centered, below photo)
+    const nameY = photoY + PHOTO_RADIUS + 20;
+    node.append('text')
+      .attr('x', 0)
+      .attr('y', nameY)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', '11px')
+      .attr('font-weight', 'bold')
+      .attr('fill', '#fff')
+      .text(member.name);
+    
+    // Birth/Death years (at bottom of card)
+    const birth = member.birth || '?';
+    const death = member.death || '';
+    const yearText = death ? `${birth}–${death}` : birth;
+    
+    const yearY = NODE_HEIGHT/2 - 12;
+    node.append('text')
+      .attr('x', 0)
+      .attr('y', yearY)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', '9px')
+      .attr('fill', '#fff')
+      .attr('opacity', 0.9)
+      .text(yearText);
+  });
 
   // Update nodes selection to include spouses
   nodes = group.selectAll('.node, .spouse-node');
@@ -331,29 +507,25 @@ export function renderDetailPanel(member, role, allMembers = []) {
   const content = document.getElementById('sidebar-detail-content');
   if (!content) return;
 
-  // Get current language
-  const lang = _currentLanguage;
-  const isZh = lang === 'zh';
-  
-  // Translations
+  // Always use Chinese labels
   const labels = {
-    gender: isZh ? '性别' : 'Gender',
-    male: isZh ? '♂ 男' : '♂ Male',
-    female: isZh ? '♀ 女' : '♀ Female',
-    unknown: isZh ? '—' : '—',
-    born: isZh ? '出生' : 'Born',
-    died: isZh ? '去世' : 'Died',
-    living: isZh ? '在世' : 'Living',
-    leeFamily: isZh ? '李家成员' : 'Lee Family',
-    yes: isZh ? '✓ 是' : '✓ Yes',
-    no: isZh ? '✗ 否' : '✗ No',
-    parent: isZh ? '父母' : 'Parent',
-    otherParent: isZh ? '另一方父母' : 'Other Parent',
-    notes: isZh ? '备注' : 'Notes',
-    addChild: isZh ? '➕ 添加子女' : '➕ Add Child',
-    addSpouse: isZh ? '💑 添加配偶' : '💑 Add Spouse',
-    edit: isZh ? '✏️ 编辑' : '✏️ Edit',
-    delete: isZh ? '🗑️ 删除' : '🗑️ Delete'
+    gender: '性别',
+    male: '♂ 男',
+    female: '♀ 女',
+    unknown: '—',
+    born: '出生',
+    died: '去世',
+    living: '在世',
+    leeFamily: '李家成员',
+    yes: '✓ 是',
+    no: '✗ 否',
+    parent: '父',
+    otherParent: '母',
+    notes: '备注',
+    addChild: '➕ 添加子女',
+    addSpouse: '💑 添加配偶',
+    edit: '✏️ 编辑',
+    delete: '🗑️ 删除'
   };
 
   const gender = member.gender === 'male' ? labels.male
@@ -371,22 +543,75 @@ export function renderDetailPanel(member, role, allMembers = []) {
   let parentInfo = '';
   if (member.parentId) {
     const parent = allMembers.find(m => m.id === member.parentId);
-    if (parent) {
-      parentInfo = `<tr><td>${labels.parent}</td><td>${parent.name}</td></tr>`;
-      
-      // If there's a secondary parent (spouse), show it
-      if (member.secondaryParentId) {
-        const secondaryParent = allMembers.find(m => m.id === member.secondaryParentId);
-        if (secondaryParent) {
-          parentInfo += `<tr><td>${labels.otherParent}</td><td>${secondaryParent.name}</td></tr>`;
-        }
+    const secondaryParent = member.secondaryParentId ? allMembers.find(m => m.id === member.secondaryParentId) : null;
+    
+    // Determine who is father and who is mother based on gender
+    let father = null;
+    let mother = null;
+    
+    if (parent && secondaryParent) {
+      // Both parents exist - assign based on gender
+      if (parent.gender === 'male' && secondaryParent.gender === 'female') {
+        father = parent;
+        mother = secondaryParent;
+      } else if (parent.gender === 'female' && secondaryParent.gender === 'male') {
+        mother = parent;
+        father = secondaryParent;
+      } else if (parent.gender === 'male') {
+        // Primary is male, secondary gender unknown
+        father = parent;
+        mother = secondaryParent;
+      } else if (parent.gender === 'female') {
+        // Primary is female, secondary gender unknown
+        mother = parent;
+        father = secondaryParent;
+      } else if (secondaryParent.gender === 'male') {
+        // Primary gender unknown, secondary is male
+        father = secondaryParent;
+        mother = parent;
+      } else if (secondaryParent.gender === 'female') {
+        // Primary gender unknown, secondary is female
+        mother = secondaryParent;
+        father = parent;
+      } else {
+        // Both genders unknown - use primary as father
+        father = parent;
+        mother = secondaryParent;
       }
+    } else if (parent) {
+      // Only one parent - assign based on gender
+      if (parent.gender === 'male') {
+        father = parent;
+      } else if (parent.gender === 'female') {
+        mother = parent;
+      } else {
+        father = parent; // Default to father if unknown
+      }
+    }
+    
+    // Display father and mother
+    if (father) {
+      parentInfo += `<tr><td>${labels.parent}</td><td>${father.name}</td></tr>`;
+    }
+    if (mother) {
+      parentInfo += `<tr><td>${labels.otherParent}</td><td>${mother.name}</td></tr>`;
     }
   }
 
   content.innerHTML = `
-    <h2 style="margin-bottom: 8px; font-size: 22px; color: #2c1810;">${member.name}</h2>
-    ${nickname !== '—' ? `<div class="chinese-name">${nickname}</div>` : ''}
+    <div style="display: flex; align-items: flex-start; gap: 15px; margin-bottom: 15px;">
+      ${member.imageURL ? `
+        <div style="flex-shrink: 0;">
+          <img src="${member.imageURL}" alt="${member.name}" 
+               style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #8b1a1a; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"
+               onerror="this.style.display='none'">
+        </div>
+      ` : ''}
+      <div style="flex: 1;">
+        <h2 style="margin-bottom: 8px; font-size: 22px; color: #2c1810;">${member.name}</h2>
+        ${nickname !== '—' ? `<div class="chinese-name">${nickname}</div>` : ''}
+      </div>
+    </div>
     <table>
       <tr><td>${labels.gender}</td><td>${gender}</td></tr>
       <tr><td>${labels.born}</td><td>${birth}</td></tr>
@@ -406,13 +631,12 @@ export function renderDetailPanel(member, role, allMembers = []) {
 }
 
 /**
- * Setup controls for zoom, language toggle, and search
+ * Setup controls for zoom and search
  */
 function setupControls(container) {
   const btnZoomIn  = document.getElementById('btn-zoom-in');
   const btnZoomOut = document.getElementById('btn-zoom-out');
   const btnReset   = document.getElementById('btn-reset');
-  const btnLang    = document.getElementById('btn-toggle-lang');
 
   const w = container.clientWidth;
   const h = container.clientHeight;
@@ -421,22 +645,6 @@ function setupControls(container) {
   if (btnZoomOut) btnZoomOut.onclick = () => svg.transition().call(zoom.scaleBy, 0.77);
   if (btnReset)   btnReset.onclick   = () =>
     svg.transition().call(zoom.transform, d3.zoomIdentity.translate(w / 2, 80).scale(0.8));
-
-  if (btnLang) btnLang.onclick = () => {
-    showChinese = !showChinese;
-    _currentLanguage = showChinese ? 'zh' : 'en';
-    
-    // Tree nodes always show Chinese names - no need to update them
-    // Only update UI translations
-    import('./translations.js').then(module => {
-      module.applyTranslations(_currentLanguage);
-      
-      // Trigger custom event for other modules to update
-      document.dispatchEvent(new CustomEvent('language-changed', { 
-        detail: { language: _currentLanguage } 
-      }));
-    });
-  };
 
   // ── Search ─────────────────────────────────────────────────────────────────
   const searchBtn   = document.getElementById('search-btn');

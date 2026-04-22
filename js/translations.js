@@ -2,7 +2,7 @@
 export const translations = {
   zh: {
     // Header
-    title: '李家族谱',
+    title: '李家有谱',
     subtitle: 'Lee Family Genealogy Tree',
     
     // Tabs

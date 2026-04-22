@@ -19,19 +19,31 @@ header {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap; /* Prevent wrapping */
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
   z-index: 10;
+  overflow-x: auto; /* Allow horizontal scroll if needed */
 }
 
-header h1    { font-size: 1.3rem; letter-spacing: 2px; white-space: nowrap; }
-header .subtitle { font-size: 0.8rem; opacity: 0.85; flex: 1; white-space: nowrap; }
+header h1    { 
+  font-size: 1.3rem; 
+  letter-spacing: 2px; 
+  white-space: nowrap; 
+  min-width: 150px; /* Fixed width for title */
+}
+header .subtitle { 
+  font-size: 0.8rem; 
+  opacity: 0.85; 
+  white-space: nowrap;
+  min-width: 150px; /* Fixed width for subtitle */
+}
 
 /* Tab Navigation */
 .tab-navigation {
   display: flex;
   gap: 8px;
   margin-left: 20px;
+  flex-shrink: 0; /* Don't shrink tabs */
 }
 
 .tab-btn {
@@ -45,8 +57,9 @@ header .subtitle { font-size: 0.8rem; opacity: 0.85; flex: 1; white-space: nowra
   font-weight: 600;
   transition: all 0.3s;
   white-space: nowrap;
-  min-width: 200px; /* Fixed minimum width */
+  width: 220px; /* Fixed width instead of min-width */
   text-align: center;
+  flex-shrink: 0; /* Don't shrink */
 }
 
 .tab-btn:hover {
@@ -61,7 +74,12 @@ header .subtitle { font-size: 0.8rem; opacity: 0.85; flex: 1; white-space: nowra
   box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
 }
 
-.controls { display: flex; gap: 6px; flex-wrap: wrap; }
+.controls { 
+  display: flex; 
+  gap: 6px; 
+  flex-wrap: nowrap; /* Don't wrap */
+  flex-shrink: 0; /* Don't shrink */
+}
 .controls button, .auth-controls button {
   background: rgba(255,255,255,0.15);
   border: 1px solid rgba(255,255,255,0.4);
@@ -72,8 +90,9 @@ header .subtitle { font-size: 0.8rem; opacity: 0.85; flex: 1; white-space: nowra
   font-size: 0.78rem;
   transition: background 0.2s;
   white-space: nowrap;
-  min-width: 45px; /* Fixed minimum width for control buttons */
+  width: 50px; /* Fixed width */
   text-align: center;
+  flex-shrink: 0; /* Don't shrink */
 }
 .controls button:hover, .auth-controls button:hover {
   background: rgba(255,255,255,0.3);
@@ -84,6 +103,7 @@ header .subtitle { font-size: 0.8rem; opacity: 0.85; flex: 1; white-space: nowra
   align-items: center;
   gap: 8px;
   margin-left: auto;
+  flex-shrink: 0; /* Don't shrink */
 }
 
 #user-display-name {
@@ -92,9 +112,22 @@ header .subtitle { font-size: 0.8rem; opacity: 0.85; flex: 1; white-space: nowra
   white-space: nowrap;
 }
 
-.btn-signin  { background: rgba(255,255,255,0.25) !important; font-weight: 600; min-width: 160px; }
-.btn-signout { background: rgba(0,0,0,0.2) !important; min-width: 80px; }
-.btn-manage  { background: rgba(255,255,255,0.2) !important; min-width: 130px; }
+.btn-signin  { 
+  background: rgba(255,255,255,0.25) !important; 
+  font-weight: 600; 
+  width: 180px !important; /* Fixed width */
+  flex-shrink: 0;
+}
+.btn-signout { 
+  background: rgba(0,0,0,0.2) !important; 
+  width: 90px !important; /* Fixed width */
+  flex-shrink: 0;
+}
+.btn-manage  { 
+  background: rgba(255,255,255,0.2) !important; 
+  width: 140px !important; /* Fixed width */
+  flex-shrink: 0;
+}
 
 /* ── Error Banner ─────────────────────────────────────────── */
 #error-banner {
@@ -130,7 +163,34 @@ header .subtitle { font-size: 0.8rem; opacity: 0.85; flex: 1; white-space: nowra
 }
 #tree-svg:active { cursor: grabbing; }
 
-/* ── Nodes ────────────────────────────────────────────────── */
+/* ── Nodes (Card Style) ───────────────────────────────────── */
+.node rect {
+  transition: filter 0.2s, transform 0.2s;
+  cursor: pointer;
+}
+.node rect:hover { 
+  filter: brightness(1.1) drop-shadow(0 6px 12px rgba(0,0,0,0.3)); 
+  transform: translateY(-2px);
+}
+
+.node .card-name {
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  pointer-events: none;
+}
+
+.node .card-years {
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  pointer-events: none;
+}
+
+.node.highlighted rect {
+  stroke: #f39c12 !important;
+  stroke-width: 4px !important;
+  filter: drop-shadow(0 0 8px #f39c12) brightness(1.1);
+}
+
+/* Legacy circle nodes (keeping for compatibility) */
 .node circle {
   stroke-width: 2.5px;
   transition: r 0.2s, filter 0.2s;
