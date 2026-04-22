@@ -6,7 +6,7 @@ export const translations = {
     subtitle: 'Lee Family Genealogy Tree',
     
     // Tabs
-    tabGenealogy: '族谱 (李姓)',
+    tabGenealogy: '族谱 (李氏)',
     tabFamilyTree: '家族树 (全部)',
     
     // Controls
