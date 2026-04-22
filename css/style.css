@@ -658,19 +658,52 @@ header .subtitle {
 }
 
 body.sidebar-open #tree-container {
-  margin-left: 320px; /* Same as above */
+  margin-left: 320px;
 }
 
 /* Mobile adjustments */
 @media (max-width: 768px) {
+  /* Tree takes full width on mobile */
+  #tree-container {
+    margin-left: 0 !important;
+  }
+
+  /* Sidebar becomes a slide-over drawer */
   #left-sidebar {
-    width: 100%;
+    width: 85vw;
     max-width: 320px;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 200;
   }
-  
-  body.sidebar-open #tree-container {
-    margin-left: 0;
+
+  /* When open, slide in */
+  #left-sidebar.mobile-open {
+    transform: translateX(0);
   }
+
+  /* Dim overlay behind sidebar */
+  #sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 199;
+  }
+  #sidebar-backdrop.visible {
+    display: block;
+  }
+
+  /* Mobile close button inside sidebar */
+  #sidebar-mobile-close {
+    display: flex !important;
+  }
+
+  /* Compact header on mobile */
+  header h1 { font-size: 1rem; min-width: unset; }
+  header .subtitle { display: none; }
+  .tab-btn { width: auto; padding: 6px 10px; font-size: 0.75rem; }
+  .tab-navigation { margin-left: 8px; }
 }
 /* ── Multiple Spouse Support ─────────────────────────────────── */
 .marriage-link {

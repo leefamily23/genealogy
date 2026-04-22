@@ -46,8 +46,13 @@
     <button id="error-banner-close">✕</button>
   </div>
 
-  <!-- Left Sidebar (Always visible) -->
+  <!-- Sidebar backdrop (mobile only) -->
+  <div id="sidebar-backdrop"></div>
+
+  <!-- Left Sidebar (Always visible on desktop, drawer on mobile) -->
   <div id="left-sidebar">
+    <!-- Mobile close button -->
+    <button id="sidebar-mobile-close" onclick="window.closeMobileSidebar()" style="display:none; position:absolute; top:10px; right:10px; background:none; border:none; font-size:1.4rem; cursor:pointer; color:#888; z-index:10;">✕</button>
     <div id="sidebar-content">
       <!-- Member Details Section -->
       <div id="sidebar-detail" class="sidebar-section">

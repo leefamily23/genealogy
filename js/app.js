@@ -69,6 +69,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.addEventListener('member-selected', (e) => {
     renderDetailPanel(e.detail, _role, _members); // Pass all members, not filtered
     wireDetailActions(e.detail);
+    // On mobile, open the sidebar drawer when a member is selected
+    if (window.innerWidth <= 768) {
+      window.openMobileSidebar();
+    }
   });
   
   // Language changed event — refresh detail panel if a member is selected
@@ -389,11 +393,23 @@ async function fetchLatestCommitFromGitHub() {
     throw error;
   }
 }
-/**
- * Open add child form with specific spouse context
- * @param {string} parentId - Primary parent ID
- * @param {string} spouseId - Spouse ID for the child
- */
+// ── Mobile Sidebar ────────────────────────────────────────────────────────────
+window.openMobileSidebar = function() {
+  document.getElementById('left-sidebar')?.classList.add('mobile-open');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  if (backdrop) backdrop.classList.add('visible');
+};
+
+window.closeMobileSidebar = function() {
+  document.getElementById('left-sidebar')?.classList.remove('mobile-open');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  if (backdrop) backdrop.classList.remove('visible');
+};
+
+// Close sidebar when tapping backdrop
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('sidebar-backdrop')?.addEventListener('click', window.closeMobileSidebar);
+});
 function openAddChildWithSpouseForm(parentId, spouseId) {
   // Find the spouse member for display
   const spouse = _members.find(m => m.id === spouseId);
