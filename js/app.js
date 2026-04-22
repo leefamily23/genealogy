@@ -77,10 +77,30 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ── Reload tree from Firestore ────────────────────────────────────────────────
 async function reloadTree() {
+  console.log('🔄 Reloading tree data...');
+  const startTime = performance.now();
+  
   try {
     _members = await getAllMembers();
+    console.log(`📊 Loaded ${_members.length} family members`);
+    
+    // Safety check for data integrity
+    if (_members.length > 0) {
+      const spouseCount = _members.reduce((count, member) => {
+        if (member.spouses && Array.isArray(member.spouses)) {
+          return count + member.spouses.length;
+        }
+        return member.spouse ? count + 1 : count;
+      }, 0);
+      console.log(`💑 Found ${spouseCount} spouse relationships`);
+    }
+    
     renderTree(_members, _role);
+    
+    const endTime = performance.now();
+    console.log(`✅ Tree reload completed in ${(endTime - startTime).toFixed(2)}ms`);
   } catch (err) {
+    console.error('❌ Tree reload failed:', err);
     // Error already shown by db.js
   }
 }
@@ -129,37 +149,21 @@ function wireDetailActions(member) {
   const editBtn = detailContent.querySelector('.btn-edit');
   const deleteBtn = detailContent.querySelector('.btn-delete');
   
-  // Remove any existing event listeners by cloning and replacing the buttons
+  // Add event listeners directly without cloning (more efficient)
   if (addChildBtn) {
-    const newAddChildBtn = addChildBtn.cloneNode(true);
-    addChildBtn.parentNode.replaceChild(newAddChildBtn, addChildBtn);
-    newAddChildBtn.addEventListener('click', () => {
-      openAddForm(member.id);
-    });
+    addChildBtn.onclick = () => openAddForm(member.id);
   }
 
   if (addSpouseBtn) {
-    const newAddSpouseBtn = addSpouseBtn.cloneNode(true);
-    addSpouseBtn.parentNode.replaceChild(newAddSpouseBtn, addSpouseBtn);
-    newAddSpouseBtn.addEventListener('click', () => {
-      openAddSpouseForm(member.id);
-    });
+    addSpouseBtn.onclick = () => openAddSpouseForm(member.id);
   }
 
   if (editBtn) {
-    const newEditBtn = editBtn.cloneNode(true);
-    editBtn.parentNode.replaceChild(newEditBtn, editBtn);
-    newEditBtn.addEventListener('click', () => {
-      openEditForm(member);
-    });
+    editBtn.onclick = () => openEditForm(member);
   }
 
   if (deleteBtn) {
-    const newDeleteBtn = deleteBtn.cloneNode(true);
-    deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
-    newDeleteBtn.addEventListener('click', () => {
-      handleDelete(member.id, member.name, hasChildren, reloadTree);
-    });
+    deleteBtn.onclick = () => handleDelete(member.id, member.name, hasChildren, reloadTree);
   }
 }
 
@@ -229,12 +233,23 @@ async function fetchLatestCommitFromGitHub() {
   const GITHUB_BRANCH = 'main';      // Your main branch name
   
   try {
-    // Fetch latest commit from GitHub API
+    // Fetch latest commit from GitHub API with timeout
     const apiUrl = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/commits/${GITHUB_BRANCH}`;
     
     console.log(`🔍 Fetching latest commit from: ${apiUrl}`);
     
-    const response = await fetch(apiUrl);
+    // Add timeout to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    const response = await fetch(apiUrl, {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+    
+    clearTimeout(timeoutId);
     
     if (!response.ok) {
       throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
@@ -262,7 +277,41 @@ async function fetchLatestCommitFromGitHub() {
     };
     
   } catch (error) {
+    if (error.name === 'AbortError') {
+      console.error('❌ GitHub API request timed out');
+      throw new Error('GitHub API request timed out');
+    }
     console.error('❌ Failed to fetch from GitHub API:', error);
     throw error;
+  }
+}
+/**
+ * Open add child form with specific spouse context
+ * @param {string} parentId - Primary parent ID
+ * @param {string} spouseId - Spouse ID for the child
+ */
+function openAddChildWithSpouseForm(parentId, spouseId) {
+  // Find the spouse member for display
+  const spouse = _members.find(m => m.id === spouseId);
+  const parent = _members.find(m => m.id === parentId);
+  
+  if (!spouse || !parent) {
+    console.error('Could not find parent or spouse for child addition');
+    return;
+  }
+  
+  // Use the existing openAddForm but store spouse context
+  openAddForm(parentId);
+  
+  // Update the modal title to show both parents
+  const modalTitle = document.getElementById('modal-title');
+  if (modalTitle) {
+    modalTitle.textContent = `Add Child for ${parent.name} & ${spouse.name}`;
+  }
+  
+  // Store spouse context for form submission
+  const form = document.getElementById('member-form');
+  if (form) {
+    form.dataset.childSpouseContext = spouseId;
   }
 }

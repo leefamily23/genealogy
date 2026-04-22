@@ -69,8 +69,13 @@ export function closeForm() {
   
   // Clear any spouse relationship data
   const form = document.getElementById('member-form');
-  if (form && form.dataset.spouseOf) {
-    delete form.dataset.spouseOf;
+  if (form) {
+    if (form.dataset.spouseOf) {
+      delete form.dataset.spouseOf;
+    }
+    if (form.dataset.childSpouseContext) {
+      delete form.dataset.childSpouseContext;
+    }
   }
 }
 
@@ -100,6 +105,7 @@ export function initEditForm(onSaved) {
     const id       = document.getElementById('f-id').value.trim();
     const parentId = document.getElementById('f-parent-id').value.trim();
     const spouseOf = form.dataset.spouseOf; // Check if this is a spouse creation
+    const childSpouseContext = form.dataset.childSpouseContext; // Check if child has spouse context
     
     const member   = {
       name:     name.trim(),
@@ -110,6 +116,11 @@ export function initEditForm(onSaved) {
       notes:    document.getElementById('f-notes').value.trim(),
       parentId: parentId || null,
     };
+    
+    // If child has spouse context, add additional parent reference
+    if (childSpouseContext) {
+      member.secondaryParentId = childSpouseContext;
+    }
 
     const user = getCurrentUser();
     const actorName = user?.displayName || user?.email || 'Unknown';
@@ -162,8 +173,9 @@ export function initEditForm(onSaved) {
         });
       }
       
-      // Clear the spouseOf data attribute
+      // Clear the spouseOf and childSpouseContext data attributes
       delete form.dataset.spouseOf;
+      delete form.dataset.childSpouseContext;
       
       closeForm();
       if (onSaved) onSaved();
