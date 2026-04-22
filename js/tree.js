@@ -766,8 +766,9 @@ export function renderDetailPanel(member, role, allMembers = []) {
 
 /**
  * Export the current tree view as PNG image
+ * @param {string} currentTab - Current tab name ('genealogy' or 'family-tree')
  */
-export async function exportTreeAsImage() {
+export async function exportTreeAsImage(currentTab = 'family-tree') {
   try {
     const svgElement = document.getElementById('tree-svg');
     if (!svgElement) {
@@ -779,10 +780,11 @@ export async function exportTreeAsImage() {
     const bbox = group.node().getBBox();
     const transform = d3.zoomTransform(svgElement);
     
-    // Calculate dimensions with padding
+    // Calculate dimensions with padding - use higher resolution for clarity
+    const scale = 2; // 2x resolution for crisp image
     const padding = 50;
-    const width = (bbox.width + padding * 2) * transform.k;
-    const height = (bbox.height + padding * 2) * transform.k;
+    const width = (bbox.width + padding * 2) * scale;
+    const height = (bbox.height + padding * 2) * scale;
     
     // Clone SVG for export
     const clonedSvg = svgElement.cloneNode(true);
@@ -792,16 +794,16 @@ export async function exportTreeAsImage() {
     // Apply transform to center the content
     const g = clonedSvg.querySelector('g');
     if (g) {
-      const translateX = -bbox.x * transform.k + padding * transform.k;
-      const translateY = -bbox.y * transform.k + padding * transform.k;
-      g.setAttribute('transform', `translate(${translateX}, ${translateY}) scale(${transform.k})`);
+      const translateX = -bbox.x * scale + padding * scale;
+      const translateY = -bbox.y * scale + padding * scale;
+      g.setAttribute('transform', `translate(${translateX}, ${translateY}) scale(${scale})`);
     }
     
     // Convert SVG to string
     const serializer = new XMLSerializer();
     const svgString = serializer.serializeToString(clonedSvg);
     
-    // Create canvas
+    // Create canvas with higher resolution
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
@@ -820,11 +822,22 @@ export async function exportTreeAsImage() {
       ctx.drawImage(img, 0, 0);
       URL.revokeObjectURL(url);
       
-      // Download as PNG
+      // Download as PNG with proper filename
       canvas.toBlob((blob) => {
         const link = document.createElement('a');
-        const timestamp = new Date().toISOString().split('T')[0];
-        link.download = `lee-family-tree-${timestamp}.png`;
+        
+        // Generate filename based on current tab
+        const now = new Date();
+        const dateStr = now.getFullYear().toString() + 
+                       (now.getMonth() + 1).toString().padStart(2, '0') + 
+                       now.getDate().toString().padStart(2, '0');
+        const timeStr = now.getHours().toString().padStart(2, '0') + 
+                       now.getMinutes().toString().padStart(2, '0') + 
+                       now.getSeconds().toString().padStart(2, '0');
+        
+        const tabName = currentTab === 'genealogy' ? '族谱' : '家族树';
+        link.download = `${tabName}_${dateStr}_${timeStr}.png`;
+        
         link.href = URL.createObjectURL(blob);
         link.click();
         URL.revokeObjectURL(link.href);

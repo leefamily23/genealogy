@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btn-backup')
     ?.addEventListener('click', openBackupModal);
   document.getElementById('btn-export-image')
-    ?.addEventListener('click', exportTreeAsImage);
+    ?.addEventListener('click', () => exportTreeAsImage(_currentTab));
 
   // Error banner close
   document.getElementById('error-banner-close')
