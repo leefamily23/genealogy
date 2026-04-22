@@ -177,8 +177,8 @@ function initBuildInfo() {
     // Simple build info without external import
     const buildInfo = {
       version: '1.0.0',
-      shortCommit: '3712136',
-      commitId: '3712136e8c0d1ea3b6728c08efbc6c513e0824ff',
+      shortCommit: '256b688',
+      commitId: '256b6889854763f373c9ab3ce9324c6e0bebe38d',
       branch: 'main',
       buildDate: new Date().toISOString(),
       formattedDate: new Date().toLocaleString()
