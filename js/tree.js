@@ -124,10 +124,11 @@ export function renderTree(members, role) {
   // ── Add spouses next to their partners ─────────────────────────────────────
   const spouseData = [];
   const marriageLinks = [];
+  const renderedSpouses = new Set(); // Track which spouses we've already rendered
   
   root.descendants().forEach(node => {
     const member = node.data;
-    if (member.spouse) {
+    if (member.spouse && !renderedSpouses.has(member.spouse)) {
       const spouseMember = members.find(m => m.id === member.spouse);
       if (spouseMember) {
         // Position spouse to the right of the main member
@@ -144,6 +145,9 @@ export function renderTree(members, role) {
           source: { x: node.x + NODE_RADIUS, y: node.y },
           target: { x: spouseNode.x - NODE_RADIUS, y: spouseNode.y }
         });
+        
+        // Mark this spouse as rendered
+        renderedSpouses.add(member.spouse);
       }
     }
   });
