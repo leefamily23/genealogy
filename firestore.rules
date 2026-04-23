@@ -62,6 +62,11 @@ service cloud.firestore {
       allow write: if isEditorOrAdmin();
     }
 
+    // editSessions: editor/admin can read/write, used for edit mode locking
+    match /editSessions/{sessionId} {
+      allow read, write: if isEditorOrAdmin();
+    }
+
     // snapshots: editor/admin can read and create, admin can delete
     match /snapshots/{snapshotId} {
       allow read, create: if isEditorOrAdmin();

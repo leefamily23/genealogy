@@ -1,5 +1,6 @@
 import * as db from './db.js';
 import { getCurrentUser } from './auth.js';
+import { recordEditActivity } from './editSession.js';
 import { 
   initImageUploadUI, 
   getSelectedImageFile, 
@@ -341,6 +342,9 @@ export function initEditForm(onSaved) {
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    
+    // Record edit activity
+    recordEditActivity();
 
     const name = document.getElementById('f-name').value;
     const validation = validateMemberName(name);

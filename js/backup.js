@@ -23,6 +23,21 @@ export async function openBackupModal() {
   if (modal) {
     modal.classList.remove('hidden');
     await loadSnapshotList();
+    
+    // Show/hide admin-only features
+    updateBackupModalForRole();
+  }
+}
+
+/**
+ * Update backup modal visibility based on user role
+ */
+function updateBackupModalForRole() {
+  // This will be called from app.js with the current role
+  const terminateBtn = document.getElementById('btn-terminate-session');
+  if (terminateBtn) {
+    // Role check will be done in the global function
+    terminateBtn.style.display = 'block';
   }
 }
 

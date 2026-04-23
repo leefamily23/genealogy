@@ -5,6 +5,7 @@ import { initEditForm, openAddForm, openEditForm, openAddSpouseForm, openAddForm
 import { startHistoryPanel, stopHistoryPanel, initHistoryToggle } from './historyPanel.js';
 import { openUserManagement, initUserManagement } from './userManagement.js';
 import { openBackupModal, initBackup } from './backup.js';
+import { initEditSession, enterEditMode, exitEditMode, recordEditActivity, isInEditMode } from './editSession.js';
 import { applyTranslations } from './translations.js';
 import './migrate.js'; // exposes window.migrateToFirestore
 
@@ -91,6 +92,17 @@ async function resetPageViews() {
 // Make reset function available globally for backup modal
 window.resetPageViews = resetPageViews;
 
+// Make force terminate function available globally for backup modal (admin only)
+window.forceTerminateEditSession = async () => {
+  if (_role !== 'admin') {
+    alert('❌ 仅管理员可以执行此操作');
+    return;
+  }
+  
+  const { forceTerminateEditSession } = await import('./editSession.js');
+  await forceTerminateEditSession();
+};
+
 // ── State ─────────────────────────────────────────────────────────────────────
 let _members = [];
 let _role    = null;
@@ -108,6 +120,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initUserManagement();
   initBackup();
   initEditForm(reloadTree);
+  initEditSession();
   
   // Apply initial translations (Chinese by default)
   applyTranslations(_currentLanguage);
@@ -190,6 +203,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   onAuthStateChange(async (user, role) => {
     _role = role;
     updateAuthUI(user, role);
+    
+    // Dispatch auth state change event for edit session system
+    document.dispatchEvent(new CustomEvent('auth-state-changed', {
+      detail: { user, role }
+    }));
     
     // Reload tree data when auth state changes to ensure we have fresh data
     await reloadTree();
@@ -328,53 +346,76 @@ function wireDetailActions(member) {
   
   // Add parent button (only for root members)
   if (addParentBtn) {
-    addParentBtn.onclick = () => openAddParentForm(member.id);
+    addParentBtn.onclick = async () => {
+      if (await enterEditMode()) {
+        recordEditActivity();
+        openAddParentForm(member.id);
+      }
+    };
   }
   
-  // Add event listeners directly without cloning (more efficient)
+  // Add event listeners with edit mode check
   if (addChildBtn) {
-    addChildBtn.onclick = () => {
-      // Check if this member is a spouse (not in main lineage)
-      const isSpouseOnly = _members.some(m => {
-        if (m.spouses && Array.isArray(m.spouses)) {
-          return m.spouses.includes(member.id);
-        }
-        return m.spouse === member.id;
-      }) && !_members.some(m => m.parentId === member.id) && !member.parentId;
-      
-      if (isSpouseOnly) {
-        // This is a spouse node - find the main lineage member they're married to
-        const mainLineageMember = _members.find(m => {
+    addChildBtn.onclick = async () => {
+      if (await enterEditMode()) {
+        recordEditActivity();
+        // Check if this member is a spouse (not in main lineage)
+        const isSpouseOnly = _members.some(m => {
           if (m.spouses && Array.isArray(m.spouses)) {
             return m.spouses.includes(member.id);
           }
           return m.spouse === member.id;
-        });
+        }) && !_members.some(m => m.parentId === member.id) && !member.parentId;
         
-        if (mainLineageMember) {
-          // Use main lineage member as primary parent, spouse as secondary
-          openAddFormWithSpouse(mainLineageMember.id, member.id, _members);
+        if (isSpouseOnly) {
+          // This is a spouse node - find the main lineage member they're married to
+          const mainLineageMember = _members.find(m => {
+            if (m.spouses && Array.isArray(m.spouses)) {
+              return m.spouses.includes(member.id);
+            }
+            return m.spouse === member.id;
+          });
+          
+          if (mainLineageMember) {
+            // Use main lineage member as primary parent, spouse as secondary
+            openAddFormWithSpouse(mainLineageMember.id, member.id, _members);
+          } else {
+            // Fallback to normal behavior
+            openAddForm(member.id, _members);
+          }
         } else {
-          // Fallback to normal behavior
+          // Normal member - use as primary parent
           openAddForm(member.id, _members);
         }
-      } else {
-        // Normal member - use as primary parent
-        openAddForm(member.id, _members);
       }
     };
   }
 
   if (addSpouseBtn) {
-    addSpouseBtn.onclick = () => openAddSpouseForm(member.id);
+    addSpouseBtn.onclick = async () => {
+      if (await enterEditMode()) {
+        recordEditActivity();
+        openAddSpouseForm(member.id);
+      }
+    };
   }
 
   if (editBtn) {
-    editBtn.onclick = () => openEditForm(member);
+    editBtn.onclick = async () => {
+      if (await enterEditMode()) {
+        recordEditActivity();
+        openEditForm(member);
+      }
+    };
   }
 
   if (deleteBtn) {
-    deleteBtn.onclick = () => handleDelete(member.id, member.name, hasChildren, reloadTree);
+    deleteBtn.onclick = async () => {
+      if (await enterEditMode()) {
+        recordEditActivity();
+        handleDelete(member.id, member.name, hasChildren, reloadTree);
+      }
+    };
   }
 }
 
