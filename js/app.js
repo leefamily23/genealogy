@@ -26,7 +26,10 @@ async function incrementPageViews() {
     const statsDoc = await getDoc(statsRef);
     if (statsDoc.exists()) {
       const count = statsDoc.data().count;
+      console.log('Page views:', count); // Debug log
       displayPageViews(count);
+    } else {
+      console.log('No page views document found'); // Debug log
     }
   } catch (error) {
     console.warn('Failed to update page views:', error);
@@ -34,7 +37,11 @@ async function incrementPageViews() {
 }
 
 function displayPageViews(count) {
+  console.log('Displaying page views:', count); // Debug log
+  
   const buildInfo = document.getElementById('build-info');
+  console.log('Build info element:', buildInfo); // Debug log
+  
   if (buildInfo && count) {
     // Add view count to build info
     let viewsEl = document.getElementById('page-views');
@@ -44,12 +51,46 @@ function displayPageViews(count) {
       viewsEl.style.marginLeft = '10px';
       viewsEl.style.color = '#7f8c8d';
       viewsEl.style.fontSize = '0.8rem';
+      viewsEl.style.display = 'inline-block';
       buildInfo.appendChild(viewsEl);
+      console.log('Created page views element'); // Debug log
     }
     viewsEl.textContent = `👁️ ${count.toLocaleString()} 次浏览`;
     viewsEl.title = `网站总浏览次数: ${count}`;
+    console.log('Updated page views text:', viewsEl.textContent); // Debug log
+  } else {
+    console.log('Cannot display page views - buildInfo:', !!buildInfo, 'count:', count); // Debug log
   }
 }
+
+// Reset page views (admin only)
+async function resetPageViews() {
+  const confirmed = confirm('⚠️ 确定要重置浏览次数吗？\n\n这个操作无法撤销！');
+  if (!confirmed) return;
+  
+  try {
+    const { doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+    const { db } = await import('./firebase-config.js');
+    
+    const statsRef = doc(db, 'stats', 'pageViews');
+    
+    await setDoc(statsRef, {
+      count: 0,
+      lastUpdated: new Date().toISOString(),
+      resetBy: 'admin',
+      resetAt: new Date().toISOString()
+    });
+    
+    displayPageViews(0);
+    alert('✅ 浏览次数已重置为 0');
+  } catch (error) {
+    console.error('Failed to reset page views:', error);
+    alert(`❌ 重置失败: ${error.message}`);
+  }
+}
+
+// Make reset function available globally for backup modal
+window.resetPageViews = resetPageViews;
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let _members = [];

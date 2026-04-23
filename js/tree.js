@@ -797,7 +797,9 @@ export async function exportTreeAsImage(currentTab = 'family-tree') {
     const transform = d3.zoomTransform(svgElement);
     
     // Calculate dimensions with padding - use higher resolution for clarity
-    const scale = 2; // 2x resolution for crisp image
+    // Higher resolution for mobile devices
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const scale = isMobile ? 4 : 2; // 4x resolution for mobile, 2x for desktop
     const padding = 50;
     const width = (bbox.width + padding * 2) * scale;
     const height = (bbox.height + padding * 2) * scale;
