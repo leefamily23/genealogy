@@ -55,8 +55,7 @@ function displayPageViews(count) {
       buildInfo.appendChild(viewsEl);
       console.log('Created page views element'); // Debug log
     }
-    viewsEl.textContent = `👁️ ${count.toLocaleString()} 次浏览`;
-    viewsEl.title = `网站总浏览次数: ${count}`;
+    viewsEl.textContent = `👁️ ${count.toLocaleString()}`;
     console.log('Updated page views text:', viewsEl.textContent); // Debug log
   } else {
     console.log('Cannot display page views - buildInfo:', !!buildInfo, 'count:', count); // Debug log
