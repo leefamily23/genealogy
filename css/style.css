@@ -784,6 +784,7 @@ body.sidebar-open #tree-container {
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .build-info {
-    display: none; /* Hide on mobile to save space */
+    font-size: 0.6rem; /* Smaller font on mobile but still visible */
+    margin-left: 5px;
   }
 }
