@@ -219,7 +219,23 @@
     </div>
   </div>
 
-  <!-- Search -->
+  <!-- Relationship Result Modal -->
+  <div id="relationship-modal" class="hidden modal-overlay">
+    <div class="modal-card" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3>🔗 家庭关系</h3>
+        <button id="relationship-close">✕</button>
+      </div>
+      
+      <div id="relationship-content" style="text-align: center; padding: 20px;">
+        <!-- Content will be populated by JavaScript -->
+      </div>
+      
+      <div style="text-align: center; margin-top: 20px;">
+        <button id="relationship-ok" class="btn-save">确定</button>
+      </div>
+    </div>
+  </div>
   <div id="search-bar">
     <input type="text" id="search-input" placeholder="搜索姓名..." />
     <button id="search-btn">🔍</button>

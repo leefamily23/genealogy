@@ -8,6 +8,49 @@ import { openBackupModal, initBackup } from './backup.js';
 import { applyTranslations } from './translations.js';
 import './migrate.js'; // exposes window.migrateToFirestore
 
+// ── Page View Counter ─────────────────────────────────────────────────────────
+async function incrementPageViews() {
+  try {
+    const { doc, getDoc, setDoc, increment } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+    const { db } = await import('./firebase-config.js');
+    
+    const statsRef = doc(db, 'stats', 'pageViews');
+    
+    // Increment the counter
+    await setDoc(statsRef, {
+      count: increment(1),
+      lastUpdated: new Date().toISOString()
+    }, { merge: true });
+    
+    // Get updated count and display it
+    const statsDoc = await getDoc(statsRef);
+    if (statsDoc.exists()) {
+      const count = statsDoc.data().count;
+      displayPageViews(count);
+    }
+  } catch (error) {
+    console.warn('Failed to update page views:', error);
+  }
+}
+
+function displayPageViews(count) {
+  const buildInfo = document.getElementById('build-info');
+  if (buildInfo && count) {
+    // Add view count to build info
+    let viewsEl = document.getElementById('page-views');
+    if (!viewsEl) {
+      viewsEl = document.createElement('span');
+      viewsEl.id = 'page-views';
+      viewsEl.style.marginLeft = '10px';
+      viewsEl.style.color = '#7f8c8d';
+      viewsEl.style.fontSize = '0.8rem';
+      buildInfo.appendChild(viewsEl);
+    }
+    viewsEl.textContent = `👁️ ${count.toLocaleString()} 次浏览`;
+    viewsEl.title = `网站总浏览次数: ${count}`;
+  }
+}
+
 // ── State ─────────────────────────────────────────────────────────────────────
 let _members = [];
 let _role    = null;
@@ -33,6 +76,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   setTimeout(async () => {
     try {
       await initBuildInfo();
+      // Increment page views after build info is loaded
+      await incrementPageViews();
     } catch (error) {
       console.warn('Build info initialization failed:', error);
     }

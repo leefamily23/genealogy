@@ -7,6 +7,11 @@ let   showChinese  = true;
 let   _currentRole = null;
 let   _currentLanguage = 'zh'; // 'zh' or 'en'
 
+// ── Relationship Mode State ──────────────────────────────────────────────────
+let _relationshipMode = false;
+let _selectedPeople = [];
+let _allMembers = []; // Store all members for relationship calculation
+
 // ── Helper Functions ──────────────────────────────────────────────────────────
 /**
  * Convert country name to ISO 2-letter country code for flagcdn.com
@@ -75,6 +80,7 @@ export function renderTree(members, role) {
   const startTime = performance.now();
   
   _currentRole = role;
+  _allMembers = members; // Store for relationship calculations
 
   const container = document.getElementById('tree-container');
   const treeGroup = document.getElementById('tree-group');
@@ -229,9 +235,14 @@ export function renderTree(members, role) {
     .style('cursor', 'pointer')
     .on('click', (event, d) => {
       console.log('Node clicked:', d.data.name);
-      document.dispatchEvent(
-        new CustomEvent('member-selected', { detail: d.data })
-      );
+      
+      if (_relationshipMode) {
+        handleRelationshipSelection(d.data);
+      } else {
+        document.dispatchEvent(
+          new CustomEvent('member-selected', { detail: d.data })
+        );
+      }
     });
 
   // Create card-style nodes
@@ -482,9 +493,14 @@ export function renderTree(members, role) {
     .style('cursor', 'pointer')
     .on('click', (event, d) => {
       console.log('Spouse node clicked:', d.data.name);
-      document.dispatchEvent(
-        new CustomEvent('member-selected', { detail: d.data })
-      );
+      
+      if (_relationshipMode) {
+        handleRelationshipSelection(d.data);
+      } else {
+        document.dispatchEvent(
+          new CustomEvent('member-selected', { detail: d.data })
+        );
+      }
     });
 
   // Create spouse nodes (same card design as main nodes)
@@ -906,4 +922,556 @@ function setupControls(container) {
   if (searchInput) searchInput.addEventListener('keydown', e => {
     if (e.key === 'Enter') doSearch();
   });
+}
+
+// ── Relationship Mode Functions ───────────────────────────────────────────────
+
+/**
+ * Toggle relationship mode on/off
+ */
+export function toggleRelationshipMode() {
+  _relationshipMode = !_relationshipMode;
+  _selectedPeople = [];
+  
+  const btn = document.getElementById('btn-relationship');
+  const instructions = document.getElementById('relationship-instructions');
+  
+  if (_relationshipMode) {
+    btn.style.backgroundColor = '#e74c3c';
+    btn.style.color = 'white';
+    showRelationshipInstructions('请点击第一个人');
+  } else {
+    btn.style.backgroundColor = '';
+    btn.style.color = '';
+    hideRelationshipInstructions();
+    clearRelationshipHighlights();
+  }
+}
+
+/**
+ * Handle clicking on a person in relationship mode
+ */
+function handleRelationshipSelection(member) {
+  if (_selectedPeople.length === 0) {
+    // First person selected
+    _selectedPeople.push(member);
+    highlightSelectedPerson(member.id);
+    showRelationshipInstructions('请点击第二个人');
+  } else if (_selectedPeople.length === 1) {
+    // Second person selected
+    if (_selectedPeople[0].id === member.id) {
+      // Same person clicked twice - deselect
+      _selectedPeople = [];
+      clearRelationshipHighlights();
+      showRelationshipInstructions('请点击第一个人');
+      return;
+    }
+    
+    _selectedPeople.push(member);
+    highlightSelectedPerson(member.id);
+    
+    // Calculate and show relationship
+    const relationship = calculateRelationship(_selectedPeople[0], _selectedPeople[1]);
+    showRelationshipResult(relationship);
+    
+    // Reset for next calculation
+    setTimeout(() => {
+      _selectedPeople = [];
+      clearRelationshipHighlights();
+      showRelationshipInstructions('请点击第一个人');
+    }, 100);
+  }
+}
+
+/**
+ * Calculate relationship between two people
+ */
+function calculateRelationship(person1, person2) {
+  // Find path from person1 to person2
+  const path = findRelationshipPath(person1, person2);
+  
+  if (!path) {
+    return {
+      relationship: '无血缘关系',
+      path: `${person1.name} 和 ${person2.name} 没有发现血缘关系`,
+      distance: -1
+    };
+  }
+  
+  // Simple relationship based on path length
+  const distance = path.length - 1;
+  let relationshipName = '';
+  
+  if (distance === 1) {
+    if (isSpouse(person1, person2)) {
+      relationshipName = '夫妻';
+    } else if (isParentChild(person1, person2)) {
+      relationshipName = '父子/母女';
+    } else {
+      relationshipName = '直系亲属';
+    }
+  } else if (distance === 2) {
+    relationshipName = '2代亲属';
+  } else if (distance === 3) {
+    relationshipName = '3代亲属';
+  } else if (distance === 4) {
+    relationshipName = '4代亲属';
+  } else {
+    relationshipName = `${distance}代亲属`;
+  }
+  
+  return {
+    relationship: relationshipName,
+    path: formatRelationshipPath(path),
+    distance: distance,
+    details: `相隔${distance}代的关系`
+  };
+}
+
+/**
+ * Find path between two people using BFS
+ */
+function findRelationshipPath(person1, person2) {
+  if (person1.id === person2.id) return [person1];
+  
+  const visited = new Set();
+  const queue = [[person1]];
+  
+  while (queue.length > 0) {
+    const path = queue.shift();
+    const current = path[path.length - 1];
+    
+    if (visited.has(current.id)) continue;
+    visited.add(current.id);
+    
+    // Get all connected people (parents, children, spouses)
+    const connections = getConnectedPeople(current);
+    
+    for (const connected of connections) {
+      if (connected.id === person2.id) {
+        return [...path, connected];
+      }
+      
+      if (!visited.has(connected.id)) {
+        queue.push([...path, connected]);
+      }
+    }
+  }
+  
+  return null; // No path found
+}
+
+/**
+ * Get all people connected to a person (parents, children, spouses)
+ */
+function getConnectedPeople(person) {
+  const connections = [];
+  
+  // Parents
+  if (person.parentId) {
+    const parent = _allMembers.find(m => m.id === person.parentId);
+    if (parent) connections.push(parent);
+  }
+  if (person.secondaryParentId) {
+    const parent = _allMembers.find(m => m.id === person.secondaryParentId);
+    if (parent) connections.push(parent);
+  }
+  
+  // Children
+  const children = _allMembers.filter(m => m.parentId === person.id || m.secondaryParentId === person.id);
+  connections.push(...children);
+  
+  // Spouses
+  if (person.spouses && Array.isArray(person.spouses)) {
+    person.spouses.forEach(spouseId => {
+      const spouse = _allMembers.find(m => m.id === spouseId);
+      if (spouse) connections.push(spouse);
+    });
+  }
+  if (person.spouse) {
+    const spouse = _allMembers.find(m => m.id === person.spouse);
+    if (spouse) connections.push(spouse);
+  }
+  
+  // Also check if this person is someone else's spouse
+  _allMembers.forEach(member => {
+    if (member.spouses && Array.isArray(member.spouses) && member.spouses.includes(person.id)) {
+      connections.push(member);
+    }
+    if (member.spouse === person.id) {
+      connections.push(member);
+    }
+  });
+  
+  return connections;
+}
+
+/**
+ * Determine relationship type based on path - Chinese family titles
+ */
+function determineRelationshipType(path, person1, person2) {
+  const pathLength = path.length - 1;
+  
+  // Direct spouse relationship
+  if (pathLength === 1 && isSpouse(person1, person2)) {
+    return { name: '夫妻', details: '配偶关系' };
+  }
+  
+  // Parent-Child relationship (1 step)
+  if (pathLength === 1 && isParentChild(person1, person2)) {
+    const person1IsParent = isParent(person1, person2);
+    if (person1IsParent) {
+      // Person1 is parent
+      if (person1.gender === 'male') {
+        return { 
+          name: person2.gender === 'male' ? '父子' : '父女', 
+          details: `${person1.name}是${person2.name}的父亲` 
+        };
+      } else {
+        return { 
+          name: person2.gender === 'male' ? '母子' : '母女', 
+          details: `${person1.name}是${person2.name}的母亲` 
+        };
+      }
+    } else {
+      // Person2 is parent
+      if (person2.gender === 'male') {
+        return { 
+          name: person1.gender === 'male' ? '父子' : '父女', 
+          details: `${person2.name}是${person1.name}的父亲` 
+        };
+      } else {
+        return { 
+          name: person1.gender === 'male' ? '母子' : '母女', 
+          details: `${person2.name}是${person1.name}的母亲` 
+        };
+      }
+    }
+  }
+  
+  // Sibling relationship (2 steps - same parents)
+  if (pathLength === 2 && haveSameParent(person1, person2)) {
+    if (person1.gender === 'male' && person2.gender === 'male') {
+      return { name: '兄弟', details: '同胞兄弟关系' };
+    } else if (person1.gender === 'female' && person2.gender === 'female') {
+      return { name: '姐妹', details: '同胞姐妹关系' };
+    } else {
+      return { name: '兄妹', details: '同胞兄妹关系' };
+    }
+  }
+  
+  // Grandparent/grandchild (2 steps - direct lineage)
+  if (pathLength === 2 && isDirectLineage(path)) {
+    const person1IsAncestor = isAncestorInPath(path, person1, person2);
+    if (person1IsAncestor) {
+      // Person1 is grandparent
+      if (person1.gender === 'male') {
+        return { 
+          name: '祖孙', 
+          details: `${person1.name}是${person2.name}的爷爷` 
+        };
+      } else {
+        return { 
+          name: '祖孙', 
+          details: `${person1.name}是${person2.name}的奶奶` 
+        };
+      }
+    } else {
+      // Person2 is grandparent
+      if (person2.gender === 'male') {
+        return { 
+          name: '祖孙', 
+          details: `${person2.name}是${person1.name}的爷爷` 
+        };
+      } else {
+        return { 
+          name: '祖孙', 
+          details: `${person2.name}是${person1.name}的奶奶` 
+        };
+      }
+    }
+  }
+  
+  // Uncle/Aunt - Nephew/Niece relationship (3 steps)
+  if (pathLength === 3) {
+    return analyzeUncleAuntRelationship(path, person1, person2);
+  }
+  
+  // Cousin relationships (4 steps)
+  if (pathLength === 4) {
+    return analyzeCousinRelationship(path, person1, person2);
+  }
+  
+  // Other relationships
+  return analyzeComplexRelationship(path, person1, person2);
+}
+
+/**
+ * Analyze uncle/aunt - nephew/niece relationships (3 steps)
+ */
+function analyzeUncleAuntRelationship(path, person1, person2) {
+  // Determine who is elder by generation level
+  const person1Generation = getGenerationLevel(person1);
+  const person2Generation = getGenerationLevel(person2);
+  
+  if (person1Generation < person2Generation) {
+    // Person1 is elder (uncle/aunt)
+    if (person1.gender === 'male') {
+      // Need to determine if 叔 or 伯 - for now use general term
+      return {
+        name: '叔侄',
+        details: `${person1.name}是${person2.name}的叔叔/伯伯`
+      };
+    } else {
+      return {
+        name: '姑侄',
+        details: `${person1.name}是${person2.name}的姑姑`
+      };
+    }
+  } else {
+    // Person2 is elder (uncle/aunt)
+    if (person2.gender === 'male') {
+      return {
+        name: '叔侄',
+        details: `${person2.name}是${person1.name}的叔叔/伯伯`
+      };
+    } else {
+      return {
+        name: '姑侄',
+        details: `${person2.name}是${person1.name}的姑姑`
+      };
+    }
+  }
+}
+
+/**
+ * Analyze cousin relationships (4 steps)
+ */
+function analyzeCousinRelationship(path, person1, person2) {
+  // Determine if 堂 (paternal) or 表 (maternal) relationship
+  const relationshipType = determineCousinType(path, person1, person2);
+  
+  if (person1.gender === 'male' && person2.gender === 'male') {
+    return { 
+      name: `${relationshipType}兄弟`, 
+      details: `${relationshipType}系兄弟关系` 
+    };
+  } else if (person1.gender === 'female' && person2.gender === 'female') {
+    return { 
+      name: `${relationshipType}姐妹`, 
+      details: `${relationshipType}系姐妹关系` 
+    };
+  } else {
+    return { 
+      name: `${relationshipType}兄妹`, 
+      details: `${relationshipType}系兄妹关系` 
+    };
+  }
+}
+
+/**
+ * Determine if cousin relationship is 堂 or 表
+ */
+function determineCousinType(path, person1, person2) {
+  // For now, use simple logic:
+  // If both people's fathers are brothers -> 堂
+  // Otherwise -> 表
+  
+  const person1Parent = _allMembers.find(m => m.id === person1.parentId);
+  const person2Parent = _allMembers.find(m => m.id === person2.parentId);
+  
+  if (person1Parent && person2Parent) {
+    // Check if both parents are male (fathers) and are siblings
+    if (person1Parent.gender === 'male' && person2Parent.gender === 'male' && 
+        haveSameParent(person1Parent, person2Parent)) {
+      return '堂';
+    }
+  }
+  
+  return '表';
+}
+
+/**
+ * Analyze complex relationships
+ */
+function analyzeComplexRelationship(path, person1, person2) {
+  const pathLength = path.length - 1;
+  
+  if (pathLength <= 6) {
+    return { 
+      name: `${pathLength}代亲属`, 
+      details: `相隔${pathLength}代的血缘关系` 
+    };
+  }
+  
+  return { name: '远房亲戚', details: '较远的血缘关系' };
+}
+
+/**
+ * Helper functions for relationship determination
+ */
+function isSpouse(person1, person2) {
+  return (person1.spouses && person1.spouses.includes(person2.id)) ||
+         (person1.spouse === person2.id) ||
+         (person2.spouses && person2.spouses.includes(person1.id)) ||
+         (person2.spouse === person1.id);
+}
+
+function isParentChild(person1, person2) {
+  return person1.parentId === person2.id || 
+         person1.secondaryParentId === person2.id ||
+         person2.parentId === person1.id || 
+         person2.secondaryParentId === person1.id;
+}
+
+function isParent(person1, person2) {
+  return person2.parentId === person1.id || person2.secondaryParentId === person1.id;
+}
+
+function haveSameParent(person1, person2) {
+  return (person1.parentId && (person1.parentId === person2.parentId || person1.parentId === person2.secondaryParentId)) ||
+         (person1.secondaryParentId && (person1.secondaryParentId === person2.parentId || person1.secondaryParentId === person2.secondaryParentId));
+}
+
+function isDirectLineage(path) {
+  // Check if path goes directly up or down the family tree
+  for (let i = 0; i < path.length - 1; i++) {
+    const current = path[i];
+    const next = path[i + 1];
+    if (!isParentChild(current, next)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function isAncestor(person1, person2) {
+  return person2.parentId === person1.id || person2.secondaryParentId === person1.id;
+}
+
+function areCousins(path) {
+  // Simplified cousin detection - path goes up then down
+  const midPoint = Math.floor(path.length / 2);
+  return path.length >= 4 && path.length % 2 === 0;
+}
+
+/**
+ * Format relationship path for display
+ */
+function formatRelationshipPath(path) {
+  if (path.length <= 1) return '';
+  
+  let pathStr = path[0].name;
+  for (let i = 1; i < path.length; i++) {
+    pathStr += ` → ${path[i].name}`;
+  }
+  return pathStr;
+}
+
+/**
+ * Show relationship instructions
+ */
+function showRelationshipInstructions(text) {
+  let instructions = document.getElementById('relationship-instructions');
+  if (!instructions) {
+    instructions = document.createElement('div');
+    instructions.id = 'relationship-instructions';
+    instructions.style.cssText = `
+      position: fixed;
+      top: 120px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #3498db;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-weight: bold;
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    `;
+    document.body.appendChild(instructions);
+  }
+  instructions.textContent = text;
+  instructions.style.display = 'block';
+}
+
+/**
+ * Hide relationship instructions
+ */
+function hideRelationshipInstructions() {
+  const instructions = document.getElementById('relationship-instructions');
+  if (instructions) {
+    instructions.style.display = 'none';
+  }
+}
+
+/**
+ * Highlight selected person
+ */
+function highlightSelectedPerson(personId) {
+  // Add highlight class to the person's node
+  const allNodes = document.querySelectorAll('.node, .spouse-node');
+  allNodes.forEach(node => {
+    const nodeData = d3.select(node).datum();
+    if (nodeData && nodeData.data.id === personId) {
+      node.classList.add('relationship-selected');
+      // Add visual highlight
+      const rect = node.querySelector('rect');
+      if (rect) {
+        rect.style.stroke = '#e74c3c';
+        rect.style.strokeWidth = '4px';
+      }
+    }
+  });
+}
+
+/**
+ * Clear all relationship highlights
+ */
+function clearRelationshipHighlights() {
+  const allNodes = document.querySelectorAll('.node, .spouse-node');
+  allNodes.forEach(node => {
+    node.classList.remove('relationship-selected');
+    const rect = node.querySelector('rect');
+    if (rect) {
+      rect.style.stroke = '#fff';
+      rect.style.strokeWidth = '2px';
+    }
+  });
+}
+
+/**
+ * Show relationship result in modal
+ */
+function showRelationshipResult(result) {
+  const modal = document.getElementById('relationship-modal');
+  const content = document.getElementById('relationship-content');
+  
+  content.innerHTML = `
+    <div style="margin-bottom: 20px;">
+      <h2 style="color: #2c3e50; margin-bottom: 10px;">${result.relationship}</h2>
+      <p style="color: #7f8c8d; font-size: 0.9rem;">${result.details || ''}</p>
+    </div>
+    
+    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+      <h4 style="margin-bottom: 8px; color: #2c3e50;">关系路径：</h4>
+      <p style="font-family: monospace; color: #34495e; line-height: 1.6;">${result.path}</p>
+    </div>
+    
+    ${result.distance >= 0 ? `<p style="color: #7f8c8d; font-size: 0.85rem;">相隔 ${result.distance} 代</p>` : ''}
+  `;
+  
+  modal.classList.remove('hidden');
+}
+
+/**
+ * Initialize relationship modal
+ */
+export function initRelationshipModal() {
+  const closeBtn = document.getElementById('relationship-close');
+  const okBtn = document.getElementById('relationship-ok');
+  const modal = document.getElementById('relationship-modal');
+  
+  if (closeBtn) closeBtn.onclick = () => modal.classList.add('hidden');
+  if (okBtn) okBtn.onclick = () => modal.classList.add('hidden');
 }

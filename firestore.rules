@@ -61,5 +61,11 @@ service cloud.firestore {
       allow read:  if request.auth != null;
       allow write: if isEditorOrAdmin();
     }
+
+    // stats: public read, anyone can increment page views
+    match /stats/{statId} {
+      allow read: if true;
+      allow write: if statId == 'pageViews';
+    }
   }
 }
