@@ -89,23 +89,6 @@ async function promoteUser(uid) {
       timestamp:          new Date().toISOString(),
     });
 
-    // Send promotion notification email
-    if (target?.email) {
-      try {
-        await emailjs.send('service_cbrph9q', 'template_rnqpksu', {
-          to_email:     target.email,
-          promoted_by:  actorName,
-          new_role:     'Admin',
-          message:      `恭喜！您已被提升为管理员 (Admin)。您现在拥有完整的管理权限，包括用户管理和系统设置。`,
-          subject:      '🎉 您已被提升为管理员 - 李家有谱'
-        });
-        console.log('Promotion email sent successfully');
-      } catch (emailErr) {
-        console.error('Promotion email send failed:', emailErr);
-        // Don't show error to user, just log it
-      }
-    }
-
     await refreshUserList();
   } catch (err) { /* error dispatched by db.js */ }
 }
@@ -133,23 +116,6 @@ async function demoteUser(uid) {
       parentMemberName:   '',
       timestamp:          new Date().toISOString(),
     });
-
-    // Send demotion notification email
-    if (target?.email) {
-      try {
-        await emailjs.send('service_cbrph9q', 'template_rnqpksu', {
-          to_email:     target.email,
-          promoted_by:  actorName,
-          new_role:     'Editor',
-          message:      `您的权限已更改为编辑者 (Editor)。您仍可以编辑家族树内容，但无法管理用户权限。`,
-          subject:      '📝 权限变更通知 - 李家有谱'
-        });
-        console.log('Demotion email sent successfully');
-      } catch (emailErr) {
-        console.error('Demotion email send failed:', emailErr);
-        // Don't show error to user, just log it
-      }
-    }
 
     await refreshUserList();
   } catch (err) { /* error dispatched by db.js */ }

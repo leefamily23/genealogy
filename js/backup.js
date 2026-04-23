@@ -1,13 +1,29 @@
 import { getAllMembers } from './db.js';
+import { getCurrentUser } from './auth.js';
 import { db } from './firebase-config.js';
-import { collection, writeBatch, doc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { 
+  collection, 
+  writeBatch, 
+  doc, 
+  addDoc, 
+  getDocs, 
+  getDoc,
+  query, 
+  orderBy, 
+  limit,
+  deleteDoc,
+  serverTimestamp 
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 /**
- * Open backup modal
+ * Open backup modal and load snapshots
  */
-export function openBackupModal() {
+export async function openBackupModal() {
   const modal = document.getElementById('backup-modal');
-  if (modal) modal.classList.remove('hidden');
+  if (modal) {
+    modal.classList.remove('hidden');
+    await loadSnapshotList();
+  }
 }
 
 /**
@@ -19,68 +35,195 @@ function closeBackupModal() {
 }
 
 /**
- * Export all family data as JSON file
+ * Create a new snapshot
  */
-async function exportBackup() {
+async function createSnapshot(description = '') {
   try {
+    const user = getCurrentUser();
     const members = await getAllMembers();
-    const backup = {
-      version: '1.0',
-      exportDate: new Date().toISOString(),
+    
+    const snapshot = {
+      createdAt: serverTimestamp(),
+      createdBy: user?.displayName || user?.email || 'Unknown',
+      createdByUid: user?.uid || '',
+      type: 'manual',
+      description: description || '手动快照',
       memberCount: members.length,
-      members: members
+      data: {
+        version: '2.0',
+        members: members
+      }
     };
 
-    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `lee-family-backup-${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-
-    alert(`✅ 备份已导出 (${members.length} 位成员)`);
+    await addDoc(collection(db, 'snapshots'), snapshot);
+    
+    // Clean up old snapshots (keep only 15 most recent)
+    await cleanupOldSnapshots();
+    
+    alert(`✅ 快照已创建 (${members.length} 位成员)`);
+    await loadSnapshotList();
   } catch (err) {
-    console.error('Export failed:', err);
-    alert(`❌ 导出失败: ${err.message}`);
+    console.error('Create snapshot failed:', err);
+    alert(`❌ 创建快照失败: ${err.message}`);
   }
 }
 
 /**
- * Import backup from JSON file
+ * Load and display snapshot list
  */
-async function importBackup(file) {
-  if (!file) return;
+async function loadSnapshotList() {
+  const container = document.getElementById('snapshot-list');
+  if (!container) return;
 
+  container.innerHTML = '<p style="color: #666; text-align: center;">加载中...</p>';
+
+  try {
+    const q = query(
+      collection(db, 'snapshots'), 
+      orderBy('createdAt', 'desc'), 
+      limit(15)
+    );
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      container.innerHTML = '<p style="color: #666; text-align: center;">暂无快照</p>';
+      return;
+    }
+
+    container.innerHTML = '';
+    
+    querySnapshot.forEach((docSnapshot) => {
+      const snapshot = docSnapshot.data();
+      const snapshotId = docSnapshot.id;
+      
+      // Handle both serverTimestamp and regular dates
+      let dateStr = '未知时间';
+      if (snapshot.createdAt) {
+        const date = snapshot.createdAt.toDate ? snapshot.createdAt.toDate() : new Date(snapshot.createdAt);
+        dateStr = date.toLocaleString('zh-CN');
+      }
+      
+      const row = document.createElement('div');
+      row.className = 'snapshot-row';
+      row.style.cssText = `
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        padding: 12px; 
+        border: 1px solid #ddd; 
+        border-radius: 6px; 
+        margin-bottom: 8px;
+        background: #f9f9f9;
+      `;
+      
+      row.innerHTML = `
+        <div style="flex: 1;">
+          <div style="font-weight: 500; color: #2c1810;">
+            ${snapshot.type === 'manual' ? '📸' : '🔄'} ${snapshot.description || '快照'}
+          </div>
+          <div style="font-size: 0.8rem; color: #666;">
+            ${dateStr} • ${snapshot.memberCount} 位成员 • ${snapshot.createdBy}
+          </div>
+        </div>
+        <button class="btn-restore" data-snapshot-id="${snapshotId}" 
+                style="background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">
+          恢复
+        </button>
+      `;
+      
+      container.appendChild(row);
+    });
+
+    // Wire restore buttons
+    container.querySelectorAll('.btn-restore').forEach(btn => {
+      btn.addEventListener('click', () => restoreSnapshot(btn.dataset.snapshotId));
+    });
+
+  } catch (err) {
+    console.error('Load snapshots failed:', err);
+    container.innerHTML = '<p style="color: red; text-align: center;">加载快照失败</p>';
+  }
+}
+
+/**
+ * Restore from a snapshot
+ */
+async function restoreSnapshot(snapshotId) {
   const confirmed = confirm(
-    '⚠️ 警告：导入备份会覆盖所有现有数据！\n\n确定要继续吗？'
+    '⚠️ 警告：恢复快照会覆盖所有现有数据！\n\n确定要继续吗？'
   );
   if (!confirmed) return;
 
   try {
-    const text = await file.text();
-    const backup = JSON.parse(text);
-
-    if (!backup.members || !Array.isArray(backup.members)) {
-      throw new Error('无效的备份文件格式');
+    // Get snapshot data
+    const snapshotDoc = await getDoc(doc(db, 'snapshots', snapshotId));
+    if (!snapshotDoc.exists()) {
+      throw new Error('快照不存在');
     }
 
-    // Use batch write for efficiency
+    const snapshot = snapshotDoc.data();
+    const members = snapshot.data.members;
+
+    if (!members || !Array.isArray(members)) {
+      throw new Error('快照数据格式无效');
+    }
+
+    // Restore data using batch write
     const batch = writeBatch(db);
-    backup.members.forEach(member => {
+    
+    // Clear existing data first (get all current docs)
+    const currentDocs = await getDocs(collection(db, 'family'));
+    currentDocs.forEach(docSnapshot => {
+      batch.delete(docSnapshot.ref);
+    });
+
+    // Add snapshot data
+    members.forEach(member => {
       const docRef = doc(db, 'family', member.id);
       batch.set(docRef, member);
     });
 
     await batch.commit();
 
-    alert(`✅ 备份已恢复 (${backup.members.length} 位成员)\n\n请刷新页面查看。`);
+    alert(`✅ 快照已恢复 (${members.length} 位成员)\n\n页面将自动刷新。`);
     closeBackupModal();
     window.location.reload();
   } catch (err) {
-    console.error('Import failed:', err);
-    alert(`❌ 导入失败: ${err.message}`);
+    console.error('Restore failed:', err);
+    alert(`❌ 恢复失败: ${err.message}`);
   }
+}
+
+/**
+ * Clean up old snapshots (keep only 15 most recent)
+ */
+async function cleanupOldSnapshots() {
+  try {
+    const q = query(collection(db, 'snapshots'), orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    
+    const docs = querySnapshot.docs;
+    if (docs.length <= 15) return; // No cleanup needed
+
+    // Delete snapshots beyond the 15 most recent
+    const batch = writeBatch(db);
+    for (let i = 15; i < docs.length; i++) {
+      batch.delete(docs[i].ref);
+    }
+    await batch.commit();
+    
+    console.log(`🗑️ Cleaned up ${docs.length - 15} old snapshots`);
+  } catch (err) {
+    console.warn('Cleanup failed:', err);
+  }
+}
+
+/**
+ * Create daily auto-snapshot if data changed
+ */
+export async function createDailySnapshotIfNeeded() {
+  // Removed: Daily auto-snapshots feature
+  // Only manual snapshots are supported now
 }
 
 /**
@@ -88,15 +231,15 @@ async function importBackup(file) {
  */
 export function initBackup() {
   const closeBtn = document.getElementById('backup-close');
-  const exportBtn = document.getElementById('btn-export-backup');
-  const importBtn = document.getElementById('btn-import-backup');
-  const fileInput = document.getElementById('backup-file-input');
+  const createBtn = document.getElementById('btn-create-snapshot');
 
   if (closeBtn) closeBtn.onclick = closeBackupModal;
-  if (exportBtn) exportBtn.onclick = exportBackup;
-  if (importBtn) importBtn.onclick = () => fileInput?.click();
-  if (fileInput) fileInput.onchange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) importBackup(file);
-  };
+  if (createBtn) {
+    createBtn.onclick = () => {
+      const description = prompt('快照描述 (可选):');
+      if (description !== null) { // User didn't cancel
+        createSnapshot(description.trim());
+      }
+    };
+  }
 }

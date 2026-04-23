@@ -194,26 +194,27 @@
 
   <!-- Backup Modal -->
   <div id="backup-modal" class="hidden modal-overlay">
-    <div class="modal-card" style="max-width: 480px;">
+    <div class="modal-card" style="max-width: 600px;">
       <div class="modal-header">
-        <h3>📥 备份与恢复</h3>
+        <h3>📥 快照备份</h3>
         <button id="backup-close">✕</button>
       </div>
       
       <div style="display: flex; flex-direction: column; gap: 16px;">
         <div>
-          <h4 style="margin-bottom: 8px; color: #2c1810;">导出备份</h4>
-          <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">下载所有家族数据为 JSON 文件</p>
-          <button id="btn-export-backup" class="btn-save" style="width: 100%;">📥 导出备份</button>
+          <h4 style="margin-bottom: 8px; color: #2c1810;">创建快照</h4>
+          <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">保存当前所有家族数据的快照</p>
+          <button id="btn-create-snapshot" class="btn-save" style="width: 100%;">📸 创建快照</button>
         </div>
         
         <hr style="border: none; border-top: 1px solid #ddd;">
         
         <div>
-          <h4 style="margin-bottom: 8px; color: #2c1810;">导入备份</h4>
-          <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">从备份文件恢复数据（⚠️ 会覆盖现有数据）</p>
-          <input type="file" id="backup-file-input" accept=".json" style="display: none;" />
-          <button id="btn-import-backup" class="btn-save" style="width: 100%; background: #e67e22;">📤 选择备份文件</button>
+          <h4 style="margin-bottom: 8px; color: #2c1810;">快照历史</h4>
+          <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">最近 15 个快照（⚠️ 恢复会覆盖现有数据）</p>
+          <div id="snapshot-list" style="max-height: 300px; overflow-y: auto;">
+            <!-- Snapshots will be loaded here -->
+          </div>
         </div>
         
         <hr style="border: none; border-top: 1px solid #ddd;">
