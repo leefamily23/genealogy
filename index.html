@@ -15,41 +15,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   
-  <!-- Dynamic CSS with cache busting -->
   <link rel="stylesheet" href="css/style.css" id="main-css" />
-  
-  <script>
-    // Force cache busting for CSS and JS files
-    (function() {
-      const timestamp = new Date().getTime();
-      const buildVersion = '2.1.0'; // Update this when you make changes
-      const cacheKey = buildVersion + '_' + Math.floor(timestamp / (1000 * 60 * 5)); // 5-minute cache
-      
-      // Update CSS with cache buster
-      const cssLink = document.getElementById('main-css');
-      if (cssLink) {
-        cssLink.href = `css/style.css?v=${cacheKey}`;
-      }
-      
-      // Store cache key for JS files
-      window.CACHE_BUSTER = cacheKey;
-      
-      // Force reload if version changed
-      const lastVersion = localStorage.getItem('app_version');
-      if (lastVersion && lastVersion !== buildVersion) {
-        console.log('🔄 New version detected, clearing cache...');
-        // Clear various caches
-        if ('caches' in window) {
-          caches.keys().then(names => {
-            names.forEach(name => caches.delete(name));
-          });
-        }
-        localStorage.clear();
-        sessionStorage.clear();
-      }
-      localStorage.setItem('app_version', buildVersion);
-    })();
-  </script>
 </head>
 <body>
 
@@ -329,53 +295,8 @@
   <!-- EmailJS -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script>emailjs.init('Qyx3q6V4wt5v6q4Jk');</script>
-  
-  <!-- Cache-busted App entry point -->
-  <script>
-    // Load main app with cache buster
-    const appScript = document.createElement('script');
-    appScript.type = 'module';
-    appScript.src = `js/app.js?v=${window.CACHE_BUSTER}`;
-    document.head.appendChild(appScript);
-    
-    // Mobile-specific cache clearing
-    if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-      console.log('📱 Mobile device detected - implementing aggressive cache clearing');
-      
-      // Add service worker for cache control
-      if ('serviceWorker' in navigator) {
-        const swCode = `
-          self.addEventListener('fetch', event => {
-            if (event.request.url.includes('.js') || event.request.url.includes('.css')) {
-              // Force network for JS/CSS files on mobile
-              event.respondWith(
-                fetch(event.request, { 
-                  cache: 'no-store',
-                  headers: { 'Cache-Control': 'no-cache' }
-                }).catch(() => fetch(event.request))
-              );
-            }
-          });
-        `;
-        const blob = new Blob([swCode], { type: 'application/javascript' });
-        const swUrl = URL.createObjectURL(blob);
-        
-        navigator.serviceWorker.register(swUrl)
-          .then(() => console.log('🔧 Mobile cache control active'))
-          .catch(err => console.log('SW registration failed:', err));
-      }
-      
-      // Force reload on visibility change (when user returns to app)
-      let lastReload = 0;
-      document.addEventListener('visibilitychange', () => {
-        if (!document.hidden && Date.now() - lastReload > 30000) { // 30 second cooldown
-          lastReload = Date.now();
-          console.log('🔄 Forcing refresh on mobile visibility change');
-          setTimeout(() => window.location.reload(true), 100);
-        }
-      });
-    }
-  </script>
+  <!-- App entry point (ES module) -->
+  <script type="module" src="js/app.js"></script>
 
   <!-- Photo Lightbox -->
   <div id="photo-lightbox" onclick="this.style.display='none'" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; flex-direction:column; gap:12px;">
