@@ -159,6 +159,16 @@ export function initUserManagement() {
   const closeBtn = document.getElementById('user-mgmt-close');
   if (closeBtn) closeBtn.addEventListener('click', closeUserManagement);
 
+  // Close when clicking on overlay (outside modal content)
+  const modal = document.getElementById('user-mgmt-modal');
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeUserManagement();
+      }
+    });
+  }
+
   // Invite form
   const inviteForm = document.getElementById('invite-form');
   if (inviteForm) {

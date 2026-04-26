@@ -793,3 +793,202 @@ body.sidebar-open #tree-container {
     margin-left: 5px;
   }
 }
+
+/* ── Editor Guide Modal ──────────────────────────────────────── */
+.modal-card-guide {
+  width: 700px;
+  max-width: 95vw;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.guide-content-wrapper {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #333;
+}
+
+.guide-section {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.guide-section:last-child {
+  border-bottom: none;
+}
+
+.guide-section h2 {
+  font-size: 1.4rem;
+  color: #8b1a1a;
+  margin-bottom: 12px;
+}
+
+.guide-section h3 {
+  font-size: 1.15rem;
+  color: #2c1810;
+  margin-bottom: 12px;
+  margin-top: 8px;
+}
+
+.guide-section h4 {
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 8px;
+  margin-top: 12px;
+}
+
+.guide-intro {
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.guide-content {
+  padding-left: 8px;
+}
+
+.guide-content ol,
+.guide-content ul {
+  margin: 8px 0 12px 20px;
+}
+
+.guide-content li {
+  margin-bottom: 6px;
+}
+
+.guide-content p {
+  margin-bottom: 10px;
+}
+
+.guide-content strong {
+  color: #8b1a1a;
+  font-weight: 600;
+}
+
+.guide-tip {
+  background: #e8f4f8;
+  border-left: 4px solid #3498db;
+  padding: 12px 14px;
+  margin: 12px 0;
+  border-radius: 4px;
+  font-size: 0.88rem;
+}
+
+.guide-warning {
+  background: #fff3cd;
+  border-left: 4px solid #f39c12;
+  padding: 12px 14px;
+  margin: 12px 0;
+  border-radius: 4px;
+  font-size: 0.88rem;
+}
+
+.highlight-orange {
+  background: linear-gradient(135deg, #ff6b35, #f7931e);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.btn-demo {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid #ddd;
+  background: #f8f8f8;
+  color: #333;
+  cursor: default;
+  margin: 2px;
+}
+
+.btn-demo.btn-success {
+  background: #27ae60;
+  color: white;
+  border-color: #27ae60;
+}
+
+.btn-demo.btn-danger {
+  background: #e74c3c;
+  color: white;
+  border-color: #e74c3c;
+}
+
+.guide-footer {
+  text-align: center;
+  padding-top: 20px;
+  font-size: 0.95rem;
+  color: #666;
+}
+
+.guide-footer p {
+  margin-bottom: 8px;
+}
+
+/* Admin-only section styling */
+.admin-only-section {
+  background: linear-gradient(135deg, #fff8f0 0%, #ffe8e0 100%) !important;
+  border: 2px solid #8b1a1a !important;
+  box-shadow: 0 4px 12px rgba(139, 26, 26, 0.15);
+}
+
+.admin-only-section h3 {
+  color: #8b1a1a !important;
+  font-size: 1.2rem !important;
+  margin-bottom: 12px !important;
+}
+
+.admin-only-section table {
+  font-size: 0.85rem;
+  margin-top: 12px;
+}
+
+.admin-only-section table th {
+  background: #8b1a1a;
+  color: white;
+  font-weight: 600;
+}
+
+.admin-only-section table td,
+.admin-only-section table th {
+  padding: 8px;
+  border: 1px solid #ddd;
+}
+
+.admin-only-section table tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Mobile adjustments for guide */
+@media (max-width: 768px) {
+  .modal-card-guide {
+    width: 95vw;
+    max-height: 90vh;
+    padding: 16px;
+  }
+
+  .guide-section h2 {
+    font-size: 1.2rem;
+  }
+
+  .guide-section h3 {
+    font-size: 1rem;
+  }
+
+  .guide-content {
+    font-size: 0.85rem;
+  }
+  
+  .admin-only-section table {
+    font-size: 0.75rem;
+  }
+  
+  .admin-only-section table td,
+  .admin-only-section table th {
+    padding: 6px 4px;
+  }
+}

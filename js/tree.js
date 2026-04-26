@@ -1476,4 +1476,13 @@ export function initRelationshipModal() {
   
   if (closeBtn) closeBtn.onclick = () => modal.classList.add('hidden');
   if (okBtn) okBtn.onclick = () => modal.classList.add('hidden');
+  
+  // Close when clicking on overlay (outside modal content)
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.add('hidden');
+      }
+    });
+  }
 }

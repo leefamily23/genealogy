@@ -40,6 +40,7 @@
     <div class="auth-controls">
       <span id="user-display-name" class="hidden"></span>
       <button id="btn-add-root" class="hidden btn-add-root">➕ 添加祖先</button>
+      <button id="btn-editor-guide" class="hidden btn-manage">📖 编辑指南</button>
       <button id="btn-backup" class="hidden btn-manage">📥 备份</button>
       <button id="btn-manage-users" class="hidden btn-manage">👥 管理用户</button>
       <button id="btn-sign-out"     class="hidden btn-signout">登出</button>
@@ -48,7 +49,7 @@
     
     <!-- Build Info -->
     <div id="build-info" class="build-info">
-      <span id="build-version">v1.0.0</span>
+      <span id="build-version">v1.0.4</span>
       <span id="build-commit">Loading...</span>
     </div>
   </header>
@@ -203,8 +204,8 @@
       
       <!-- Edit Session Management (Admin Only) -->
       <div id="edit-session-management" style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #ddd;">
-        <h4 style="margin-bottom: 8px; color: #2c1810;">编辑会话管理</h4>
-        <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">强制终止当前活跃的编辑会话（仅管理员）</p>
+        <h4 style="margin-bottom: 8px; color: #2c1810;">编辑管理</h4>
+        <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">强制终止当前活跃的编辑 Session</p>
         <button id="btn-terminate-session" class="btn-save" style="width: 100%; background: #8e44ad;" onclick="window.forceTerminateEditSession()">🚨 终止编辑会话</button>
       </div>
     </div>
@@ -214,22 +215,22 @@
   <div id="backup-modal" class="hidden modal-overlay">
     <div class="modal-card" style="max-width: 600px;">
       <div class="modal-header">
-        <h3>📥 快照备份</h3>
+        <h3>📥 备份</h3>
         <button id="backup-close">✕</button>
       </div>
       
       <div style="display: flex; flex-direction: column; gap: 16px;">
         <div>
-          <h4 style="margin-bottom: 8px; color: #2c1810;">创建快照</h4>
-          <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">保存当前所有家族数据的快照</p>
-          <button id="btn-create-snapshot" class="btn-save" style="width: 100%;">📸 创建快照</button>
+          <h4 style="margin-bottom: 8px; color: #2c1810;">创建备份</h4>
+          <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">保存当前所有家族数据的备份</p>
+          <button id="btn-create-snapshot" class="btn-save" style="width: 100%;">📸 创建备份</button>
         </div>
         
         <hr style="border: none; border-top: 1px solid #ddd;">
         
         <div>
-          <h4 style="margin-bottom: 8px; color: #2c1810;">快照历史</h4>
-          <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">最近 15 个快照（⚠️ 恢复会覆盖现有数据）</p>
+          <h4 style="margin-bottom: 8px; color: #2c1810;">备份历史</h4>
+          <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">最近 15 个备份（⚠️ 恢复会覆盖现有数据）</p>
           <div id="snapshot-list" style="max-height: 300px; overflow-y: auto;">
             <!-- Snapshots will be loaded here -->
           </div>
@@ -286,6 +287,19 @@
       <input type="text" id="username-input" placeholder="输入你的名字" 
              style="width:100%; padding: 10px; border: 2px solid #8b1a1a; border-radius: 8px; font-size: 1rem; text-align: center; outline: none; margin-bottom: 12px;" />
       <button id="username-confirm" class="btn-save" style="width: 100%; padding: 10px; font-size: 1rem;">确认</button>
+    </div>
+  </div>
+
+  <!-- Editor Guide Modal -->
+  <div id="editor-guide-modal" class="hidden modal-overlay">
+    <div class="modal-card modal-card-guide">
+      <div class="modal-header">
+        <h3>📖 编辑者指南</h3>
+        <button id="editor-guide-close">✕</button>
+      </div>
+      <div id="guide-content" class="guide-content-wrapper">
+        <!-- Content will be loaded by JavaScript -->
+      </div>
     </div>
   </div>
 

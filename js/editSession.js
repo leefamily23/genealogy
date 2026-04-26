@@ -96,7 +96,7 @@ export async function enterEditMode() {
     
     // Show reminder prompt about finishing edit
     setTimeout(() => {
-      alert('💡 提醒：编辑完成后请点击右上角的 "完成编辑" 按钮\n\n这样其他编辑者就可以继续编辑了。');
+      alert('💡 提醒：编辑完成后请点击右上角的 "完成编辑" 按钮');
     }, 500);
     
     console.log('✏️ Entered edit mode');
@@ -230,7 +230,7 @@ function startSessionMonitoring() {
       _editModeActive = false;
       stopHeartbeat();
       hideEditModeUI();
-      alert('编辑会话已被管理员终止');
+      // alert('编辑 Session 结束');
     }
   });
 }

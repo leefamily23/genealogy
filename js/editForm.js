@@ -340,6 +340,16 @@ export function initEditForm(onSaved) {
   const form = document.getElementById('member-form');
   if (!form) return;
 
+  // Close when clicking on overlay (outside modal content)
+  const modal = document.getElementById('edit-modal');
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeForm();
+      }
+    });
+  }
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     

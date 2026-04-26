@@ -257,4 +257,14 @@ export function initBackup() {
       }
     };
   }
+  
+  // Close when clicking on overlay (outside modal content)
+  const modal = document.getElementById('backup-modal');
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeBackupModal();
+      }
+    });
+  }
 }

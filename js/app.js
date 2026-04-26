@@ -1,11 +1,12 @@
 import { signIn, signOut, onAuthStateChange, handleRedirectResult, promptUsername } from './auth.js';
 import { getAllMembers }                        from './db.js';
-import { renderTree, renderDetailPanel, exportTreeAsImage }        from './tree.js';
+import { renderTree, renderDetailPanel, exportTreeAsImage, initRelationshipModal }        from './tree.js';
 import { initEditForm, openAddForm, openEditForm, openAddSpouseForm, openAddFormWithSpouse, openAddParentForm, handleDelete } from './editForm.js';
 import { startHistoryPanel, stopHistoryPanel, initHistoryToggle } from './historyPanel.js';
 import { openUserManagement, initUserManagement } from './userManagement.js';
 import { openBackupModal, initBackup } from './backup.js';
 import { initEditSession, enterEditMode, exitEditMode, recordEditActivity, isInEditMode } from './editSession.js';
+import { openEditorGuide, initEditorGuide } from './editorGuide.js';
 import { applyTranslations } from './translations.js';
 import './migrate.js'; // exposes window.migrateToFirestore
 
@@ -121,6 +122,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   initBackup();
   initEditForm(reloadTree);
   initEditSession();
+  initEditorGuide();
+  initRelationshipModal();
   
   // Apply initial translations (Chinese by default)
   applyTranslations(_currentLanguage);
@@ -151,6 +154,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   document.getElementById('btn-backup')
     ?.addEventListener('click', openBackupModal);
+  document.getElementById('btn-editor-guide')
+    ?.addEventListener('click', () => openEditorGuide(_role));
   document.getElementById('btn-export-image')
     ?.addEventListener('click', () => exportTreeAsImage(_currentTab));
 
@@ -303,6 +308,7 @@ function updateAuthUI(user, role) {
   const btnSignOut    = document.getElementById('btn-sign-out');
   const btnManage     = document.getElementById('btn-manage-users');
   const btnBackup     = document.getElementById('btn-backup');
+  const btnGuide      = document.getElementById('btn-editor-guide');
   const userDisplay   = document.getElementById('user-display-name');
 
   if (user && role) {
@@ -315,8 +321,9 @@ function updateAuthUI(user, role) {
       userDisplay.style.cursor = 'pointer';
       userDisplay.onclick = () => changeDisplayName(user);
     }
-    // Show backup for both admin and editor
+    // Show backup and guide for both admin and editor
     btnBackup?.classList.remove('hidden');
+    btnGuide?.classList.remove('hidden');
     
     if (role === 'admin') {
       btnManage?.classList.remove('hidden');
@@ -331,6 +338,7 @@ function updateAuthUI(user, role) {
     btnSignOut?.classList.add('hidden');
     btnManage?.classList.add('hidden');
     btnBackup?.classList.add('hidden');
+    btnGuide?.classList.add('hidden');
     if (userDisplay) {
       userDisplay.textContent = '';
       userDisplay.classList.add('hidden');
