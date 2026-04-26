@@ -142,7 +142,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btn-sign-out')
     ?.addEventListener('click', signOut);
   document.getElementById('btn-manage-users')
-    ?.addEventListener('click', openUserManagement);
+    ?.addEventListener('click', () => {
+      openUserManagement();
+      // Update edit session management visibility after opening
+      setTimeout(() => {
+        updateEditSessionVisibilityForRole(_role);
+      }, 100);
+    });
   document.getElementById('btn-backup')
     ?.addEventListener('click', openBackupModal);
   document.getElementById('btn-export-image')
@@ -317,6 +323,9 @@ function updateAuthUI(user, role) {
     } else {
       btnManage?.classList.add('hidden');
     }
+    
+    // Update edit session management visibility
+    updateEditSessionVisibilityForRole(role);
   } else {
     btnSignIn?.classList.remove('hidden');
     btnSignOut?.classList.add('hidden');
@@ -326,6 +335,9 @@ function updateAuthUI(user, role) {
       userDisplay.textContent = '';
       userDisplay.classList.add('hidden');
     }
+    
+    // Hide edit session management when not logged in
+    updateEditSessionVisibilityForRole(null);
   }
 }
 
@@ -596,3 +608,29 @@ function openAddChildWithSpouseForm(parentId, spouseId) {
     form.dataset.childSpouseContext = spouseId;
   }
 }
+
+// ── Edit Session Management Visibility ────────────────────────────────────────
+/**
+ * Update edit session management visibility based on user role
+ */
+function updateEditSessionVisibilityForRole(role) {
+  const editSessionSection = document.getElementById('edit-session-management');
+  if (editSessionSection) {
+    if (role === 'admin') {
+      editSessionSection.style.display = 'block';
+    } else {
+      editSessionSection.style.display = 'none';
+    }
+  }
+}
+
+// Make force terminate function available globally (admin only)
+window.forceTerminateEditSession = async () => {
+  if (_role !== 'admin') {
+    alert('❌ 仅管理员可以执行此操作');
+    return;
+  }
+  
+  const { forceTerminateEditSession } = await import('./editSession.js');
+  await forceTerminateEditSession();
+};

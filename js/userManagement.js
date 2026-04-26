@@ -9,6 +9,18 @@ export async function openUserManagement() {
   if (!modal) return;
   modal.classList.remove('hidden');
   await refreshUserList();
+  updateEditSessionManagementVisibility();
+}
+
+/**
+ * Update edit session management visibility based on user role
+ */
+function updateEditSessionManagementVisibility() {
+  const editSessionSection = document.getElementById('edit-session-management');
+  if (editSessionSection) {
+    // This will be updated from app.js with the current user role
+    editSessionSection.style.display = 'none'; // Hidden by default
+  }
 }
 
 /**
