@@ -99,77 +99,86 @@ export async function updateMember(id, fields) {
  */
 export async function deleteMember(id) {
   try {
-    // Get all members to find spouse relationships
     const allMembers = await getAllMembers();
     const memberToDelete = allMembers.find(m => m.id === id);
-    
-    if (!memberToDelete) {
-      throw new Error('Member not found');
-    }
-    
-    // Find all spouses that need to be deleted
+
+    if (!memberToDelete) throw new Error('Member not found');
+
+    // Determine if this is a main-branch node (has parentId OR secondaryParentId)
+    // or a spouse-only node (neither)
+    const isMainBranch = !!(
+      (memberToDelete.parentId && allMembers.some(m => m.id === memberToDelete.parentId)) ||
+      (memberToDelete.secondaryParentId && allMembers.some(m => m.id === memberToDelete.secondaryParentId))
+    );
+
+    // Collect spouse-only nodes to delete alongside a main-branch node
     const spousesToDelete = [];
-    
-    // 1. Direct spouses (in the member's spouses array)
-    if (memberToDelete.spouses && Array.isArray(memberToDelete.spouses)) {
-      memberToDelete.spouses.forEach(spouseId => {
+
+    if (isMainBranch) {
+      const spouseIds = new Set();
+
+      // Spouses listed on the member itself
+      if (memberToDelete.spouses && Array.isArray(memberToDelete.spouses)) {
+        memberToDelete.spouses.forEach(sid => spouseIds.add(sid));
+      }
+      // Members that list this member as their spouse
+      allMembers.forEach(m => {
+        if (m.spouses && Array.isArray(m.spouses) && m.spouses.includes(id)) {
+          spouseIds.add(m.id);
+        }
+      });
+
+      // Only delete a spouse if it is truly a spouse-only node
+      spouseIds.forEach(spouseId => {
         const spouse = allMembers.find(m => m.id === spouseId);
-        if (spouse) {
+        if (!spouse) return;
+        const hasChildren        = allMembers.some(m => m.parentId === spouseId);
+        const hasParent          = spouse.parentId && allMembers.some(m => m.id === spouse.parentId);
+        const hasSecondaryParent = spouse.secondaryParentId && allMembers.some(m => m.id === spouse.secondaryParentId);
+        if (!hasChildren && !hasParent && !hasSecondaryParent) {
           spousesToDelete.push(spouse);
         }
       });
     }
-    
-    // 2. Find members who have this member as their spouse
-    allMembers.forEach(member => {
-      if (member.spouses && Array.isArray(member.spouses) && member.spouses.includes(id)) {
-        // This member has the deleted member as a spouse
-        // Check if this member is only connected as a spouse (no children, no parents)
-        const hasChildren = allMembers.some(m => m.parentId === member.id);
-        const hasParent = member.parentId && allMembers.some(m => m.id === member.parentId);
-        
-        if (!hasChildren && !hasParent) {
-          // This is a spouse-only node, delete it
-          spousesToDelete.push(member);
-        }
-      }
-    });
-    
+    // Spouse-only node: just delete itself, no cascade
+
     // Delete the main member
     await deleteDoc(doc(db, 'family', id));
-    
-    // Delete all identified spouses
+
+    // Delete spouse-only nodes (main-branch case only)
     for (const spouse of spousesToDelete) {
       try {
         await deleteDoc(doc(db, 'family', spouse.id));
-        console.log(`Deleted spouse: ${spouse.name} (${spouse.id})`);
-      } catch (spouseErr) {
-        console.warn(`Failed to delete spouse ${spouse.name}:`, spouseErr);
+        console.log(`Deleted spouse-only node: ${spouse.name} (${spouse.id})`);
+      } catch (err) {
+        console.warn(`Failed to delete spouse ${spouse.name}:`, err);
       }
     }
-    
-    // Clean up any remaining spouse references in other members
-    const remainingMembers = allMembers.filter(m => 
-      m.id !== id && !spousesToDelete.some(s => s.id === m.id)
-    );
-    
+
+    // Clean up references in remaining members
+    const deletedIds = [id, ...spousesToDelete.map(s => s.id)];
+    const remainingMembers = allMembers.filter(m => !deletedIds.includes(m.id));
+
     for (const member of remainingMembers) {
+      const updates = {};
+
       if (member.spouses && Array.isArray(member.spouses)) {
-        const originalSpouses = [...member.spouses];
-        const cleanedSpouses = member.spouses.filter(spouseId => 
-          spouseId !== id && !spousesToDelete.some(s => s.id === spouseId)
-        );
-        
-        // Update if spouses array changed
-        if (cleanedSpouses.length !== originalSpouses.length) {
-          await updateDoc(doc(db, 'family', member.id), { 
-            spouses: cleanedSpouses 
-          });
-          console.log(`Cleaned spouse references for: ${member.name}`);
-        }
+        const cleaned = member.spouses.filter(sid => !deletedIds.includes(sid));
+        if (cleaned.length !== member.spouses.length) updates.spouses = cleaned;
+      }
+      if (member.secondaryParentId && deletedIds.includes(member.secondaryParentId)) {
+        updates.secondaryParentId = null;
+      }
+      if (member.parentId && deletedIds.includes(member.parentId)) {
+        updates.parentId = null;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await updateDoc(doc(db, 'family', member.id), updates);
+        console.log(`Cleaned references for: ${member.name}`, updates);
       }
     }
-    
+
   } catch (err) {
     dispatchError(`Delete failed: ${err.message}. Your changes were not applied.`);
     throw err;

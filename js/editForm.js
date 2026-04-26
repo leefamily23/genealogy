@@ -543,49 +543,62 @@ export function initEditForm(onSaved) {
 
 // ── Delete handler ────────────────────────────────────────────────────────────
 export async function handleDelete(memberId, memberName, hasChildren, onDeleted) {
-  // Rule: Only allow delete if member is a leaf node (no children)
-  if (hasChildren) {
-    alert(`Cannot delete "${memberName}" because they have children.\nDelete the children first.`);
-    return;
-  }
-
-  // Check if this member has spouses and warn the user
   const allMembers = await db.getAllMembers();
   const memberToDelete = allMembers.find(m => m.id === memberId);
-  
-  let warningMessage = `Are you sure you want to delete "${memberName}"?\nThis cannot be undone.`;
-  
-  if (memberToDelete) {
-    const spousesToDelete = [];
-    
-    // Find direct spouses
-    if (memberToDelete.spouses && Array.isArray(memberToDelete.spouses)) {
-      memberToDelete.spouses.forEach(spouseId => {
-        const spouse = allMembers.find(m => m.id === spouseId);
-        if (spouse) {
-          spousesToDelete.push(spouse.name);
-        }
-      });
+  if (!memberToDelete) return;
+
+  // Determine if main-branch node (has parentId OR secondaryParentId)
+  const isMainBranch = !!(
+    (memberToDelete.parentId && allMembers.some(m => m.id === memberToDelete.parentId)) ||
+    (memberToDelete.secondaryParentId && allMembers.some(m => m.id === memberToDelete.secondaryParentId))
+  );
+
+  if (!isMainBranch) {
+    // Spouse-only node: block if it has children (shouldn't normally happen)
+    if (hasChildren) {
+      alert(`Cannot delete "${memberName}" because they have children.\nDelete the children first.`);
+      return;
     }
-    
-    // Find members who have this member as their spouse (spouse-only nodes)
-    allMembers.forEach(member => {
-      if (member.spouses && Array.isArray(member.spouses) && member.spouses.includes(memberId)) {
-        const hasChildren = allMembers.some(m => m.parentId === member.id);
-        const hasParent = member.parentId && allMembers.some(m => m.id === member.parentId);
-        
-        if (!hasChildren && !hasParent) {
-          spousesToDelete.push(member.name);
-        }
-      }
-    });
-    
-    // Add spouse warning if there are spouses to delete
-    if (spousesToDelete.length > 0) {
-      const spouseList = spousesToDelete.join(', ');
-      warningMessage += `\n\n⚠️ This will also delete ${spousesToDelete.length === 1 ? 'spouse' : 'spouses'}: ${spouseList}`;
+  } else {
+    // Main-branch node: block if it has children
+    if (hasChildren) {
+      alert(`Cannot delete "${memberName}" because they have children.\nDelete the children first.`);
+      return;
     }
   }
+
+  // Build warning message
+  let warningMessage = `Are you sure you want to delete "${memberName}"?\nThis cannot be undone.`;
+
+  if (isMainBranch) {
+    // Collect spouse-only nodes that will also be deleted
+    const spouseIds = new Set();
+    if (memberToDelete.spouses && Array.isArray(memberToDelete.spouses)) {
+      memberToDelete.spouses.forEach(sid => spouseIds.add(sid));
+    }
+    allMembers.forEach(m => {
+      if (m.spouses && Array.isArray(m.spouses) && m.spouses.includes(memberId)) {
+        spouseIds.add(m.id);
+      }
+    });
+
+    const spouseNamesToDelete = [];
+    spouseIds.forEach(spouseId => {
+      const spouse = allMembers.find(m => m.id === spouseId);
+      if (!spouse) return;
+      const spouseHasChildren        = allMembers.some(m => m.parentId === spouseId);
+      const spouseHasParent          = spouse.parentId && allMembers.some(m => m.id === spouse.parentId);
+      const spouseHasSecondaryParent = spouse.secondaryParentId && allMembers.some(m => m.id === spouse.secondaryParentId);
+      if (!spouseHasChildren && !spouseHasParent && !spouseHasSecondaryParent) {
+        spouseNamesToDelete.push(spouse.name);
+      }
+    });
+
+    if (spouseNamesToDelete.length > 0) {
+      warningMessage += `\n\n⚠️ This will also delete ${spouseNamesToDelete.length === 1 ? 'spouse' : 'spouses'}: ${spouseNamesToDelete.join(', ')}`;
+    }
+  }
+  // Spouse-only node: just deletes itself, no extra warning needed
 
   const confirmed = window.confirm(warningMessage);
   if (!confirmed) return;
@@ -594,21 +607,18 @@ export async function handleDelete(memberId, memberName, hasChildren, onDeleted)
   const actorName = user?.displayName || user?.email || 'Unknown';
 
   try {
-    // Delete member image first (with error handling)
     try {
       await deleteMemberImage(memberId);
     } catch (imageError) {
       console.warn('Could not delete member image:', imageError);
-      // Continue with member deletion even if image deletion fails
     }
-    
-    // Delete member data (this will now also delete spouses)
+
     await db.deleteMember(memberId);
     await db.addHistoryEntry({
       actorUid:           user?.uid || '',
       actorName,
       actionType:         'delete',
-      description:        `deleted ${memberName}${memberToDelete && memberToDelete.spouses?.length > 0 ? ' and spouses' : ''}`,
+      description:        `deleted ${memberName}`,
       affectedMemberName: memberName,
       parentMemberName:   '',
       timestamp:          new Date().toISOString(),
