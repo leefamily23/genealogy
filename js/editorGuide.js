@@ -129,37 +129,36 @@ function loadGuideContent(role) {
     </div>
 
     <div class="guide-section">
-      <h3>📸 4. 快照备份系统</h3>
+      <h3>📸 4. 备份系统</h3>
       <div class="guide-content">
-        <h4>什么是快照？</h4>
-        <p>快照是家族树数据的完整备份，可以在数据出错时恢复到之前的状态。</p>
+        <h4>什么是备份？</h4>
+        <p>备份是家族树数据的完整备份，可以在数据出错时恢复到之前的状态。</p>
 
-        <h4>创建快照：</h4>
+        <h4>创建备份：</h4>
         <ol>
           <li>点击顶部的 <button class="btn-demo">📥 备份</button> 按钮</li>
-          <li>点击 <button class="btn-demo">📸 创建快照</button></li>
-          <li>输入快照描述（可选）</li>
+          <li>点击 <button class="btn-demo">📸 创建备份</button></li>
+          <li>输入备份描述（可选）</li>
           <li>确认创建</li>
         </ol>
 
-        <h4>恢复快照：</h4>
+        <h4>恢复备份：</h4>
         <ol>
           <li>打开备份面板</li>
-          <li>在"快照历史"中找到要恢复的快照</li>
+          <li>在"快照备份"中找到要恢复的备份</li>
           <li>点击 <button class="btn-demo btn-success">恢复</button> 按钮</li>
           <li>确认恢复操作</li>
-          <li>页面会自动刷新并恢复到快照时的状态</li>
+          <li>页面会自动刷新并恢复到备份时的状态</li>
         </ol>
 
         <h4>📋 快照信息：</h4>
         <ul>
-          <li>系统保留最近 <strong>15 个快照</strong></li>
-          <li>每个快照显示：创建时间、成员数量、创建者</li>
-          <li>恢复前会自动创建当前状态的快照</li>
+          <li>系统保留最近 <strong>15 个备份</strong></li>
+          <li>每个备份显示：创建时间、成员数量、创建者</li>
         </ul>
 
         <div class="guide-warning">
-          ⚠️ <strong>重要：</strong>恢复快照会覆盖当前所有数据，请确保在重要编辑前创建快照！
+          ⚠️ <strong>重要：</strong>恢复备份会覆盖当前所有数据，请确保在重要编辑前创建备份！
         </div>
       </div>
     </div>
@@ -170,7 +169,7 @@ function loadGuideContent(role) {
         <h4>两种视图模式：</h4>
         <ul>
           <li><strong>📜 族谱 (李氏)：</strong>只显示标记为"李家族谱"的成员</li>
-          <li><strong>🌳 家族树：</strong>显示所有家族成员，包括配偶</li>
+          <li><strong>🌳 家族树：</strong>显示所有家族成员，包括外姓配偶及其孩子们</li>
         </ul>
 
         <h4>切换视图：</h4>
@@ -393,6 +392,142 @@ function loadGuideContent(role) {
       </div>
     </div>
     ` : ''}
+
+    <div class="guide-section" style="background: #f0f4ff; border: 1.5px solid #3498db; border-radius: 8px; padding: 20px;">
+      <h3>⚙️ ${isAdmin ? '12' : '11'}. 系统技术说明</h3>
+      <div class="guide-content">
+        <p style="color: #555; margin-bottom: 16px;">以下是本网站所使用的技术系统，了解它们有助于理解数据如何存储与运作。</p>
+
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+
+          <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px; background: white; border-radius: 6px; border: 1px solid #dde;">
+            <span style="font-size: 1.5rem; flex-shrink: 0;">🔥</span>
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: nowrap;"><div style="display: flex; align-items: center; gap: 6px;"><strong style="color: #2c1810;">Firebase Firestore</strong><a href="https://firebase.google.com/docs/firestore" target="_blank" style="font-size: 0.75rem; color: #3498db;">firebase.google.com</a></div>
+                ${isAdmin ? `<a href="https://console.firebase.google.com/u/4/project/leefamilygenealogy/firestore/databases/-default-/data/~2F" target="_blank" style="font-size: 0.75rem; background: #f57c00; color: white; padding: 2px 8px; border-radius: 4px; text-decoration: none; flex-shrink: 0;">🔥 Console</a>` : ''}
+              </div>
+              <p style="margin: 4px 0 0; font-size: 0.85rem; color: #555;">云端数据库，存储所有家族成员资料、用户账号、编辑历史记录及快照备份。所有数据实时同步，任何设备打开网页都能看到最新内容。</p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px; background: white; border-radius: 6px; border: 1px solid #dde;">
+            <span style="font-size: 1.5rem; flex-shrink: 0;">🔐</span>
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: nowrap;"><div style="display: flex; align-items: center; gap: 6px;"><strong style="color: #2c1810;">Firebase Authentication</strong><a href="https://firebase.google.com/docs/auth" target="_blank" style="font-size: 0.75rem; color: #3498db;">firebase.google.com</a></div>
+                ${isAdmin ? `<a href="https://console.firebase.google.com/u/4/project/leefamilygenealogy/authentication/users" target="_blank" style="font-size: 0.75rem; background: #f57c00; color: white; padding: 2px 8px; border-radius: 4px; text-decoration: none; flex-shrink: 0;">🔥 Console</a>` : ''}
+              </div>
+              <p style="margin: 4px 0 0; font-size: 0.85rem; color: #555;">负责用户登录验证，使用 Google 账号登录。系统会核对登录者是否在授权名单内，并根据角色（编辑者 / 管理员）开放对应功能。</p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px; background: white; border-radius: 6px; border: 1px solid #dde;">
+            <span style="font-size: 1.5rem; flex-shrink: 0;">🖼️</span>
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: nowrap;"><div style="display: flex; align-items: center; gap: 6px;"><strong style="color: #2c1810;">成员照片 (Base64 in Firestore)</strong></div>
+                ${isAdmin ? `<a href="https://console.firebase.google.com/u/4/project/leefamilygenealogy/firestore/databases/-default-/data/~2Ffamily" target="_blank" style="font-size: 0.75rem; background: #f57c00; color: white; padding: 2px 8px; border-radius: 4px; text-decoration: none; flex-shrink: 0;">🔥 Console</a>` : ''}
+              </div>
+              <p style="margin: 4px 0 0; font-size: 0.85rem; color: #555;">照片并非存储在 Firebase Storage，而是以 <code style="background:#f0f0f0; padding: 1px 4px; border-radius: 3px;">Base64</code> 字符串格式直接存入 Firestore 的 <code style="background:#f0f0f0; padding: 1px 4px; border-radius: 3px;">family</code> 集合中，作为每位成员文档的 <code style="background:#f0f0f0; padding: 1px 4px; border-radius: 3px;">imageURL</code> 字段。上传前会自动压缩至 400×400px。</p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px; background: white; border-radius: 6px; border: 1px solid #dde;">
+            <span style="font-size: 1.5rem; flex-shrink: 0;">🔒</span>
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: nowrap;"><div style="display: flex; align-items: center; gap: 6px;"><strong style="color: #2c1810;">Firestore Security Rules</strong><a href="https://firebase.google.com/docs/firestore/security/get-started" target="_blank" style="font-size: 0.75rem; color: #3498db;">firebase.google.com</a></div>
+                ${isAdmin ? `<a href="https://console.firebase.google.com/u/4/project/leefamilygenealogy/firestore/databases/-default-/security/rules" target="_blank" style="font-size: 0.75rem; background: #f57c00; color: white; padding: 2px 8px; border-radius: 4px; text-decoration: none; flex-shrink: 0;">🔥 Console</a>` : ''}
+              </div>
+              <p style="margin: 4px 0 0; font-size: 0.85rem; color: #555;">数据库安全规则，在服务器端控制读写权限。确保只有已登录且经授权的用户才能修改数据，防止未授权访问或未授权篡改。</p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px; background: white; border-radius: 6px; border: 1px solid #dde;">
+            <span style="font-size: 1.5rem; flex-shrink: 0;">📧</span>
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: nowrap;"><div style="display: flex; align-items: center; gap: 6px;"><strong style="color: #2c1810;">EmailJS</strong><a href="https://www.emailjs.com" target="_blank" style="font-size: 0.75rem; color: #3498db;">emailjs.com</a></div>
+                ${isAdmin ? `<a href="https://dashboard.emailjs.com/admin/templates" target="_blank" style="font-size: 0.75rem; background: #2196f3; color: white; padding: 2px 8px; border-radius: 4px; text-decoration: none; flex-shrink: 0;">📧 Dashboard</a>` : ''}
+              </div>
+              <p style="margin: 4px 0 0; font-size: 0.85rem; color: #555;">邮件发送服务。当管理员邀请新编辑者时，系统会通过 EmailJS 自动发送邀请邮件至对方的 Gmail 地址，通知他们已获得访问权限。</p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px; background: white; border-radius: 6px; border: 1px solid #dde;">
+            <span style="font-size: 1.5rem; flex-shrink: 0;">🌐</span>
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: nowrap;"><div style="display: flex; align-items: center; gap: 6px;"><strong style="color: #2c1810;">GitHub Pages</strong><a href="https://pages.github.com" target="_blank" style="font-size: 0.75rem; color: #3498db;">pages.github.com</a></div>
+                ${isAdmin ? `<a href="https://github.com/leefamily23/genealogy" target="_blank" style="font-size: 0.75rem; background: #24292e; color: white; padding: 2px 8px; border-radius: 4px; text-decoration: none; flex-shrink: 0;">🐙 GitHub</a>` : ''}
+              </div>
+              <p style="margin: 4px 0 0; font-size: 0.85rem; color: #555;">网站托管服务，将网页部署到公开网址供所有人访问。每次推送代码到 GitHub 主分支后，网站会自动更新。支持 HTTPS 安全连接，确保数据传输加密。</p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px; background: white; border-radius: 6px; border: 1px solid #dde;">
+            <span style="font-size: 1.5rem; flex-shrink: 0;">📊</span>
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: nowrap;"><div style="display: flex; align-items: center; gap: 6px;"><strong style="color: #2c1810;">D3.js</strong><a href="https://d3js.org" target="_blank" style="font-size: 0.75rem; color: #3498db;">d3js.org</a></div>
+              </div>
+              <p style="margin: 4px 0 0; font-size: 0.85rem; color: #555;">数据可视化库，负责将家族成员数据渲染成可交互的树状图。支持缩放、拖动、点击查看详情等操作，并可导出为图片。</p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px; background: white; border-radius: 6px; border: 1px solid #dde;">
+            <span style="font-size: 1.5rem; flex-shrink: 0;">✏️</span>
+            <div>
+              <strong style="color: #2c1810;">单人编辑锁定系统</strong>
+              <p style="margin: 4px 0 0; font-size: 0.85rem; color: #555;">防止多人同时编辑造成数据冲突。每次只允许一位编辑者进入编辑模式，系统通过 Firestore 实时追踪编辑状态，并以心跳机制（每 30 秒）确认编辑者仍在线，5 分钟无操作自动释放锁定。</p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px; background: white; border-radius: 6px; border: 1px solid #dde;">
+            <span style="font-size: 1.5rem; flex-shrink: 0;">📸</span>
+            <div>
+              <strong style="color: #2c1810;">快照备份系统</strong>
+              <p style="margin: 4px 0 0; font-size: 0.85rem; color: #555;">手动创建家族树完整数据备份，存储于 Firestore。系统保留最近 15 个快照，超出时自动删除最旧的。可随时一键恢复至任意快照状态，防止误操作导致数据丢失。</p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px; background: white; border-radius: 6px; border: 1px solid #dde;">
+            <span style="font-size: 1.5rem; flex-shrink: 0;">📋</span>
+            <div>
+              <strong style="color: #2c1810;">编辑历史记录</strong>
+              <p style="margin: 4px 0 0; font-size: 0.85rem; color: #555;">每次添加、编辑、删除成员或管理用户时，系统自动记录操作者、操作内容及时间，显示在左侧边栏。方便追踪谁在何时做了什么修改。</p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px; background: white; border-radius: 6px; border: 1px solid #dde;">
+            <span style="font-size: 1.5rem; flex-shrink: 0;">🖼️</span>
+            <div>
+              <strong style="color: #2c1810;">成员照片上传</strong>
+              <p style="margin: 4px 0 0; font-size: 0.85rem; color: #555;">支持为每位成员上传照片（JPG / PNG / WebP，最大 5MB）。照片会自动压缩至 400×400px 后以 Base64 格式直接存入 Firestore 的 family 集合，点击照片可全屏查看。Firebase Storage 未使用。</p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px; background: white; border-radius: 6px; border: 1px solid #dde;">
+            <span style="font-size: 1.5rem; flex-shrink: 0;">📑</span>
+            <div>
+              <strong style="color: #2c1810;">双视图切换（族谱 / 家族树）</strong>
+              <p style="margin: 4px 0 0; font-size: 0.85rem; color: #555;">族谱视图只显示标记为"李家族谱"的成员；家族树视图显示所有成员（含配偶）。两种视图均可独立导出为图片。</p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px; background: white; border-radius: 6px; border: 1px solid #dde;">
+            <span style="font-size: 1.5rem; flex-shrink: 0;">👁️</span>
+            <div>
+              <strong style="color: #2c1810;">页面浏览次数统计</strong>
+              <p style="margin: 4px 0 0; font-size: 0.85rem; color: #555;">每次有人打开网页时自动累计浏览次数，数据存于 Firestore，显示在页面右上角。管理员可在用户管理面板中将计数重置为 0。</p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px; background: white; border-radius: 6px; border: 1px solid #dde;">
+            <span style="font-size: 1.5rem; flex-shrink: 0;">🔗</span>
+            <div>
+              <strong style="color: #2c1810;">GitHub API 版本追踪</strong>
+              <p style="margin: 4px 0 0; font-size: 0.85rem; color: #555;">页面加载时自动从 GitHub API 获取最新 commit 信息，显示在右上角版本号旁。点击 commit 编号可查看完整提交详情，方便确认当前运行的是最新版本。</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
 
     <div class="guide-section guide-footer">
       <p>如有任何问题或需要帮助，请联系管理员。</p>

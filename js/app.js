@@ -623,13 +623,10 @@ function openAddChildWithSpouseForm(parentId, spouseId) {
  */
 function updateEditSessionVisibilityForRole(role) {
   const editSessionSection = document.getElementById('edit-session-management');
-  if (editSessionSection) {
-    if (role === 'admin') {
-      editSessionSection.style.display = 'block';
-    } else {
-      editSessionSection.style.display = 'none';
-    }
-  }
+  const resetStatsSection = document.getElementById('reset-stats-management');
+  const show = role === 'admin';
+  if (editSessionSection) editSessionSection.style.display = show ? 'block' : 'none';
+  if (resetStatsSection) resetStatsSection.style.display = show ? 'block' : 'none';
 }
 
 // Make force terminate function available globally (admin only)

@@ -62,6 +62,11 @@ export async function enterEditMode() {
     return false;
   }
 
+  // Already in edit mode — no need to re-acquire or show reminder
+  if (_editModeActive) {
+    return true;
+  }
+
   // Check if another editor is active
   const activeEditor = await checkActiveEditor();
   if (activeEditor) {
@@ -404,9 +409,9 @@ export function initEditSession() {
 export async function forceTerminateEditSession() {
   try {
     await deleteDoc(doc(db, 'editSessions', 'current'));
-    alert('✅ 活跃编辑会话已强制终止');
+    alert('✅ 活跃编辑Session已强制终止');
   } catch (err) {
     console.error('Failed to terminate edit session:', err);
-    alert(`❌ 终止会话失败: ${err.message}`);
+    alert(`❌ 终止Session失败: ${err.message}`);
   }
 }

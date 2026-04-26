@@ -40,7 +40,7 @@
     <div class="auth-controls">
       <span id="user-display-name" class="hidden"></span>
       <button id="btn-add-root" class="hidden btn-add-root">➕ 添加祖先</button>
-      <button id="btn-editor-guide" class="hidden btn-manage">📖 编辑指南</button>
+      <button id="btn-editor-guide" class="hidden btn-manage">📖 指南</button>
       <button id="btn-backup" class="hidden btn-manage">📥 备份</button>
       <button id="btn-manage-users" class="hidden btn-manage">👥 管理用户</button>
       <button id="btn-sign-out"     class="hidden btn-signout">登出</button>
@@ -49,7 +49,7 @@
     
     <!-- Build Info -->
     <div id="build-info" class="build-info">
-      <span id="build-version">v1.0.4</span>
+      <span id="build-version">v1.1.6</span>
       <span id="build-commit">Loading...</span>
     </div>
   </header>
@@ -204,9 +204,24 @@
       
       <!-- Edit Session Management (Admin Only) -->
       <div id="edit-session-management" style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #ddd;">
-        <h4 style="margin-bottom: 8px; color: #2c1810;">编辑管理</h4>
-        <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">强制终止当前活跃的编辑 Session</p>
-        <button id="btn-terminate-session" class="btn-save" style="width: 100%; background: #8e44ad;" onclick="window.forceTerminateEditSession()">🚨 终止编辑会话</button>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <div>
+            <h4 style="margin-bottom: 4px; color: #2c1810;">编辑管理</h4>
+            <p style="font-size: 0.8rem; color: #666; margin: 0;">强制终止当前活跃的编辑 Session</p>
+          </div>
+          <button id="btn-terminate-session" class="btn-save" style="background: #8e44ad; white-space: nowrap; flex-shrink: 0;" onclick="window.forceTerminateEditSession()">🚨 强制终止</button>
+        </div>
+      </div>
+
+      <!-- Reset Stats (Admin Only) -->
+      <div id="reset-stats-management" style="margin-top: 16px; padding-top: 16px; border-top: 2px solid #ddd;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <div>
+            <h4 style="margin-bottom: 4px; color: #2c1810;">重置统计</h4>
+            <p style="font-size: 0.8rem; color: #666; margin: 0;">重置浏览次数计数器（⚠️ 无法撤销）</p>
+          </div>
+          <button id="btn-reset-views" class="btn-save" style="background: #c0392b; white-space: nowrap; flex-shrink: 0;" onclick="window.resetPageViews()">🔄 重置浏览次数</button>
+        </div>
       </div>
     </div>
   </div>
@@ -221,9 +236,13 @@
       
       <div style="display: flex; flex-direction: column; gap: 16px;">
         <div>
-          <h4 style="margin-bottom: 8px; color: #2c1810;">创建备份</h4>
-          <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">保存当前所有家族数据的备份</p>
-          <button id="btn-create-snapshot" class="btn-save" style="width: 100%;">📸 创建备份</button>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+            <div>
+              <h4 style="margin-bottom: 4px; color: #2c1810;">创建备份</h4>
+              <p style="font-size: 0.8rem; color: #666; margin: 0;">保存当前所有家族数据的备份</p>
+            </div>
+            <button id="btn-create-snapshot" class="btn-save" style="white-space: nowrap; flex-shrink: 0;">📸 创建备份</button>
+          </div>
         </div>
         
         <hr style="border: none; border-top: 1px solid #ddd;">
@@ -234,14 +253,6 @@
           <div id="snapshot-list" style="max-height: 300px; overflow-y: auto;">
             <!-- Snapshots will be loaded here -->
           </div>
-        </div>
-        
-        <hr style="border: none; border-top: 1px solid #ddd;">
-        
-        <div>
-          <h4 style="margin-bottom: 8px; color: #2c1810;">重置统计</h4>
-          <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">重置网站浏览次数计数器（⚠️ 无法撤销）</p>
-          <button id="btn-reset-views" class="btn-save" style="width: 100%; background: #c0392b;" onclick="window.resetPageViews()">🔄 重置浏览次数</button>
         </div>
       </div>
     </div>

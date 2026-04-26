@@ -251,7 +251,7 @@ export function initBackup() {
   if (closeBtn) closeBtn.onclick = closeBackupModal;
   if (createBtn) {
     createBtn.onclick = () => {
-      const description = prompt('快照描述 (可选):');
+      const description = prompt('备份描述 (可选):');
       if (description !== null) { // User didn't cancel
         createSnapshot(description.trim());
       }
