@@ -539,9 +539,45 @@ export async function handleDelete(memberId, memberName, hasChildren, onDeleted)
     return;
   }
 
-  const confirmed = window.confirm(
-    `Are you sure you want to delete "${memberName}"?\nThis cannot be undone.`
-  );
+  // Check if this member has spouses and warn the user
+  const allMembers = await db.getAllMembers();
+  const memberToDelete = allMembers.find(m => m.id === memberId);
+  
+  let warningMessage = `Are you sure you want to delete "${memberName}"?\nThis cannot be undone.`;
+  
+  if (memberToDelete) {
+    const spousesToDelete = [];
+    
+    // Find direct spouses
+    if (memberToDelete.spouses && Array.isArray(memberToDelete.spouses)) {
+      memberToDelete.spouses.forEach(spouseId => {
+        const spouse = allMembers.find(m => m.id === spouseId);
+        if (spouse) {
+          spousesToDelete.push(spouse.name);
+        }
+      });
+    }
+    
+    // Find members who have this member as their spouse (spouse-only nodes)
+    allMembers.forEach(member => {
+      if (member.spouses && Array.isArray(member.spouses) && member.spouses.includes(memberId)) {
+        const hasChildren = allMembers.some(m => m.parentId === member.id);
+        const hasParent = member.parentId && allMembers.some(m => m.id === member.parentId);
+        
+        if (!hasChildren && !hasParent) {
+          spousesToDelete.push(member.name);
+        }
+      }
+    });
+    
+    // Add spouse warning if there are spouses to delete
+    if (spousesToDelete.length > 0) {
+      const spouseList = spousesToDelete.join(', ');
+      warningMessage += `\n\n⚠️ This will also delete ${spousesToDelete.length === 1 ? 'spouse' : 'spouses'}: ${spouseList}`;
+    }
+  }
+
+  const confirmed = window.confirm(warningMessage);
   if (!confirmed) return;
 
   const user = getCurrentUser();
@@ -556,13 +592,13 @@ export async function handleDelete(memberId, memberName, hasChildren, onDeleted)
       // Continue with member deletion even if image deletion fails
     }
     
-    // Delete member data
+    // Delete member data (this will now also delete spouses)
     await db.deleteMember(memberId);
     await db.addHistoryEntry({
       actorUid:           user?.uid || '',
       actorName,
       actionType:         'delete',
-      description:        `deleted ${memberName}`,
+      description:        `deleted ${memberName}${memberToDelete && memberToDelete.spouses?.length > 0 ? ' and spouses' : ''}`,
       affectedMemberName: memberName,
       parentMemberName:   '',
       timestamp:          new Date().toISOString(),

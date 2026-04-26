@@ -94,6 +94,11 @@ export async function enterEditMode() {
     // Update UI
     showEditModeUI();
     
+    // Show reminder prompt about finishing edit
+    setTimeout(() => {
+      alert('💡 提醒：编辑完成后请点击右上角的 "完成编辑" 按钮\n\n这样其他编辑者就可以继续编辑了。');
+    }, 500);
+    
     console.log('✏️ Entered edit mode');
     return true;
   } catch (err) {
@@ -285,31 +290,74 @@ function showEditModeUI() {
       position: fixed;
       top: 10px;
       right: 10px;
-      background: #e74c3c;
+      background: linear-gradient(135deg, #ff6b35, #f7931e);
       color: white;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 500;
+      padding: 12px 20px;
+      border-radius: 25px;
+      font-size: 0.9rem;
+      font-weight: 600;
       z-index: 1000;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
+      animation: editModePulse 2s ease-in-out infinite;
+      border: 2px solid rgba(255, 255, 255, 0.3);
     `;
     
     indicator.innerHTML = `
       <span>✏️ 编辑模式</span>
       <button id="exit-edit-mode" style="
-        background: rgba(255,255,255,0.2);
-        border: none;
+        background: rgba(255, 255, 255, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.4);
         color: white;
-        padding: 4px 8px;
-        border-radius: 12px;
-        font-size: 0.75rem;
+        padding: 6px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 500;
         cursor: pointer;
-      ">完成编辑</button>
+        transition: all 0.2s ease;
+      " onmouseover="this.style.background='rgba(255,255,255,0.35)'" onmouseout="this.style.background='rgba(255,255,255,0.25)'">完成编辑</button>
     `;
+    
+    // Add CSS animation for pulsing effect
+    if (!document.getElementById('edit-mode-styles')) {
+      const style = document.createElement('style');
+      style.id = 'edit-mode-styles';
+      style.textContent = `
+        @keyframes editModePulse {
+          0%, 100% { 
+            transform: scale(1);
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+          }
+          50% { 
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6);
+          }
+        }
+        
+        #edit-mode-indicator:hover {
+          animation-play-state: paused;
+          transform: scale(1.02);
+        }
+        
+        @media (max-width: 768px) {
+          #edit-mode-indicator {
+            top: 5px;
+            right: 5px;
+            padding: 10px 16px;
+            font-size: 0.8rem;
+            border-radius: 20px;
+          }
+          
+          #exit-edit-mode {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
     
     document.body.appendChild(indicator);
     
