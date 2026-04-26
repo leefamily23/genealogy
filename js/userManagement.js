@@ -16,11 +16,8 @@ export async function openUserManagement() {
  * Update edit session management visibility based on user role
  */
 function updateEditSessionManagementVisibility() {
-  const editSessionSection = document.getElementById('edit-session-management');
-  if (editSessionSection) {
-    // This will be updated from app.js with the current user role
-    editSessionSection.style.display = 'none'; // Hidden by default
-  }
+  // Visibility will be controlled by app.js based on user role
+  // Don't hide it here, let the role-based function handle it
 }
 
 /**

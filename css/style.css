@@ -371,7 +371,12 @@ header .subtitle {
   overflow-y: auto;
   box-shadow: 0 8px 32px rgba(0,0,0,0.25);
 }
-.modal-card-wide { width: 480px; }
+.modal-card-wide { 
+  width: 520px; 
+  max-width: 96vw;
+  max-height: 90vh;
+  overflow-y: auto;
+}
 
 .modal-card h3 { font-size: 1.1rem; color: #8b1a1a; margin-bottom: 16px; }
 
