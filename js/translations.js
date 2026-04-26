@@ -252,7 +252,6 @@ export function applyTranslations(lang = 'zh') {
   
   // Header
   document.querySelector('header h1').textContent = `🌳 ${t.title}`;
-  document.querySelector('header .subtitle').textContent = t.subtitle;
   
   // Tabs
   const tabGenealogy = document.getElementById('tab-genealogy');
