@@ -8,7 +8,6 @@ import { openBackupModal, initBackup } from './backup.js';
 import { initEditSession, enterEditMode, exitEditMode, recordEditActivity, isInEditMode } from './editSession.js';
 import { openEditorGuide, initEditorGuide } from './editorGuide.js';
 import { applyTranslations } from './translations.js';
-import './migrate.js'; // exposes window.migrateToFirestore
 
 // ── Page View Counter ─────────────────────────────────────────────────────────
 async function incrementPageViews() {
