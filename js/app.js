@@ -1,4 +1,4 @@
-import { signIn, signOut, onAuthStateChange, handleRedirectResult, promptUsername } from './auth.js';
+import { signIn, signOut, onAuthStateChange, handleRedirectResult } from './auth.js';
 import { getAllMembers }                        from './db.js';
 import { renderTree, renderDetailPanel, exportTreeAsImage, initRelationshipModal }        from './tree.js';
 import { initEditForm, openAddForm, openEditForm, openAddSpouseForm, openAddFormWithSpouse, openAddParentForm, handleDelete } from './editForm.js';
@@ -305,23 +305,26 @@ function filterMembersByTab(members, tabName) {
 // ── Auth UI ───────────────────────────────────────────────────────────────────
 function updateAuthUI(user, role) {
   const btnSignIn     = document.getElementById('btn-sign-in');
-  const btnSignOut    = document.getElementById('btn-sign-out');
   const btnManage     = document.getElementById('btn-manage-users');
   const btnBackup     = document.getElementById('btn-backup');
   const btnGuide      = document.getElementById('btn-editor-guide');
-  const userDisplay   = document.getElementById('user-display-name');
+  const userInfoContainer = document.getElementById('user-info-container');
+  const userDisplayName = document.getElementById('user-display-name');
+  const btnUserInfo = document.getElementById('btn-user-info');
 
   if (user && role) {
     btnSignIn?.classList.add('hidden');
-    btnSignOut?.classList.remove('hidden');
-    if (userDisplay) {
-      userDisplay.textContent = user.displayName || user.email;
-      userDisplay.classList.remove('hidden');
-      userDisplay.title = '点击修改显示名字';
-      userDisplay.style.cursor = 'pointer';
-      userDisplay.onclick = () => changeDisplayName(user);
+    userInfoContainer?.classList.remove('hidden');
+    
+    if (userDisplayName) {
+      userDisplayName.textContent = user.displayName || user.email;
     }
-    // Show backup and guide for both admin and editor
+    
+    // Wire up user info button click
+    if (btnUserInfo) {
+      btnUserInfo.onclick = () => showUserInfoModal(user, role);
+    }
+    
     btnBackup?.classList.remove('hidden');
     btnGuide?.classList.remove('hidden');
     
@@ -331,22 +334,60 @@ function updateAuthUI(user, role) {
       btnManage?.classList.add('hidden');
     }
     
-    // Update edit session management visibility
     updateEditSessionVisibilityForRole(role);
   } else {
     btnSignIn?.classList.remove('hidden');
-    btnSignOut?.classList.add('hidden');
+    userInfoContainer?.classList.add('hidden');
     btnManage?.classList.add('hidden');
     btnBackup?.classList.add('hidden');
     btnGuide?.classList.add('hidden');
-    if (userDisplay) {
-      userDisplay.textContent = '';
-      userDisplay.classList.add('hidden');
-    }
     
-    // Hide edit session management when not logged in
     updateEditSessionVisibilityForRole(null);
   }
+}
+
+// ── Show user info modal ─────────────────────────────────────────────────────
+function showUserInfoModal(user, role) {
+  const modal = document.getElementById('user-info-modal');
+  const nameEl = document.getElementById('user-info-name');
+  const emailEl = document.getElementById('user-info-email');
+  const roleEl = document.getElementById('user-info-role');
+  const closeBtn = document.getElementById('user-info-close');
+  const logoutBtn = document.getElementById('user-info-logout');
+
+  if (!modal) return;
+
+  // Populate modal with user info
+  if (nameEl) nameEl.textContent = user.displayName || user.email;
+  if (emailEl) emailEl.textContent = user.email;
+  if (roleEl) {
+    const roleText = role === 'admin' ? '管理员' : '编辑者';
+    roleEl.textContent = roleText;
+  }
+
+  // Show modal
+  modal.classList.remove('hidden');
+
+  // Close button handler
+  if (closeBtn) {
+    closeBtn.onclick = () => modal.classList.add('hidden');
+  }
+
+  // Logout button handler
+  if (logoutBtn) {
+    logoutBtn.onclick = async () => {
+      modal.classList.add('hidden');
+      const { signOut } = await import('./auth.js');
+      await signOut();
+    };
+  }
+
+  // Close on backdrop click
+  modal.onclick = (e) => {
+    if (e.target === modal) {
+      modal.classList.add('hidden');
+    }
+  };
 }
 
 // ── Wire detail panel action buttons ─────────────────────────────────────────
@@ -557,23 +598,6 @@ async function fetchLatestCommitFromGitHub() {
     throw error;
   }
 }
-// ── Change Display Name ───────────────────────────────────────────────────────
-async function changeDisplayName(user) {
-  const { updateDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-  const { db } = await import('./firebase-config.js');
-  const newName = await promptUsername(user.displayName || '');
-  if (!newName) return;
-  try {
-    await updateDoc(doc(db, 'users', user.uid), { displayName: newName });
-    const userDisplay = document.getElementById('user-display-name');
-    if (userDisplay) userDisplay.textContent = newName;
-    // Update cached user display name
-    user.displayName = newName;
-  } catch (err) {
-    console.error('Failed to update display name:', err);
-  }
-}
-
 // ── Mobile Sidebar ────────────────────────────────────────────────────────────
 window.openMobileSidebar = function() {
   document.getElementById('left-sidebar')?.classList.add('mobile-open');

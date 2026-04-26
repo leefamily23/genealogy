@@ -129,6 +129,30 @@ header .subtitle {
   white-space: nowrap;
 }
 
+#btn-user-info {
+  background: rgba(255,255,255,0.15) !important;
+  border: 1.5px solid rgba(255,255,255,0.35) !important;
+  color: #fff !important;
+  padding: 7px 14px !important;
+  border-radius: 20px !important;
+  cursor: pointer !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  transition: background 0.2s !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+#btn-user-info:hover {
+  background: rgba(255,255,255,0.3) !important;
+}
+
+#user-info-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .btn-signin  { 
   background: rgba(255,255,255,0.25) !important; 
   font-weight: 600; 
