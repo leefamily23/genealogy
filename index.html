@@ -232,6 +232,21 @@
           <button id="btn-reset-views" class="btn-save" style="background: #c0392b; white-space: nowrap; flex-shrink: 0;" onclick="window.resetPageViews()">🔄 重置浏览次数</button>
         </div>
       </div>
+
+      <!-- Email Notifications (Admin Only) -->
+      <div id="email-notifications-section" style="margin-top: 16px; padding-top: 16px; border-top: 2px solid #ddd;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <div>
+            <h4 style="margin-bottom: 4px; color: #2c1810;">📧 邮件通知</h4>
+            <p style="font-size: 0.8rem; color: #666; margin: 0;">当添加新成员或更新去世日期时发送邮件通知</p>
+            <p id="email-notifications-status" style="font-size: 0.8rem; margin-top: 6px; font-weight: 600;">—</p>
+          </div>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="email-notifications-toggle" style="width: 20px; height: 20px; cursor: pointer;" />
+            <span style="font-size: 0.9rem; font-weight: 600;">启用</span>
+          </label>
+        </div>
+      </div>
     </div>
   </div>
 

@@ -1,5 +1,6 @@
 import * as db from './db.js';
 import { getCurrentUser } from './auth.js';
+import { isEmailNotificationsEnabled, toggleEmailNotifications } from './emailNotifications.js';
 
 /**
  * Open the user management modal and populate the user list.
@@ -9,6 +10,7 @@ export async function openUserManagement() {
   if (!modal) return;
   modal.classList.remove('hidden');
   await refreshUserList();
+  await loadEmailNotificationsStatus();
   updateEditSessionManagementVisibility();
 }
 
@@ -18,6 +20,43 @@ export async function openUserManagement() {
 function updateEditSessionManagementVisibility() {
   // Visibility will be controlled by app.js based on user role
   // Don't hide it here, let the role-based function handle it
+}
+
+/**
+ * Load and display email notifications status
+ */
+async function loadEmailNotificationsStatus() {
+  const container = document.getElementById('email-notifications-section');
+  if (!container) return;
+  
+  try {
+    const enabled = await isEmailNotificationsEnabled();
+    const toggle = container.querySelector('#email-notifications-toggle');
+    
+    if (toggle) {
+      toggle.checked = enabled;
+      toggle.addEventListener('change', async (e) => {
+        const actor = getCurrentUser();
+        await toggleEmailNotifications(e.target.checked, actor?.uid || '', actor?.displayName || actor?.email || 'Unknown');
+        updateEmailNotificationsUI(e.target.checked);
+      });
+    }
+    
+    updateEmailNotificationsUI(enabled);
+  } catch (error) {
+    console.error('Error loading email notifications status:', error);
+  }
+}
+
+/**
+ * Update email notifications UI
+ */
+function updateEmailNotificationsUI(enabled) {
+  const statusEl = document.getElementById('email-notifications-status');
+  if (statusEl) {
+    statusEl.textContent = enabled ? '✅ 已启用' : '❌ 已禁用';
+    statusEl.style.color = enabled ? '#27ae60' : '#c0392b';
+  }
 }
 
 /**

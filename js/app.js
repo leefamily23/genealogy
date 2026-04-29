@@ -1,5 +1,5 @@
 import { signIn, signOut, onAuthStateChange, handleRedirectResult } from './auth.js';
-import { getAllMembers }                        from './db.js';
+import { getAllMembers, initializeEmailNotificationsSettings }                        from './db.js';
 import { renderTree, renderDetailPanel, exportTreeAsImage, initRelationshipModal }        from './tree.js';
 import { initEditForm, openAddForm, openEditForm, openAddSpouseForm, openAddFormWithSpouse, openAddParentForm, handleDelete } from './editForm.js';
 import { startHistoryPanel, stopHistoryPanel, initHistoryToggle } from './historyPanel.js';
@@ -114,6 +114,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Handle redirect result (for iOS sign-in)
   await handleRedirectResult();
+
+  // Initialize email notifications settings
+  await initializeEmailNotificationsSettings();
 
   // Init one-time UI wiring
   initHistoryToggle();
@@ -647,9 +650,11 @@ function openAddChildWithSpouseForm(parentId, spouseId) {
 function updateEditSessionVisibilityForRole(role) {
   const editSessionSection = document.getElementById('edit-session-management');
   const resetStatsSection = document.getElementById('reset-stats-management');
+  const emailNotificationsSection = document.getElementById('email-notifications-section');
   const show = role === 'admin';
   if (editSessionSection) editSessionSection.style.display = show ? 'block' : 'none';
   if (resetStatsSection) resetStatsSection.style.display = show ? 'block' : 'none';
+  if (emailNotificationsSection) emailNotificationsSection.style.display = show ? 'block' : 'none';
 }
 
 // Make force terminate function available globally (admin only)

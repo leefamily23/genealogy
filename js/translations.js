@@ -68,6 +68,13 @@ export const translations = {
     generationHelp: '输入代数，例如：廿四、廿五、廿六',
     placeholderGeneration: '例如：廿四',
     
+    // Email Notifications
+    emailNotifications: '邮件通知',
+    emailNotificationsHelp: '当添加新成员或更新去世日期时发送邮件通知给所有编辑和管理员',
+    enableEmailNotifications: '启用邮件通知',
+    disableEmailNotifications: '禁用邮件通知',
+    emailNotificationsStatus: '邮件通知状态',
+    
     // Spouse Selection
     selectOtherParent: '选择另一方父母（配偶）',
     selectSpouse: '-- 选择配偶 --',
@@ -192,6 +199,13 @@ export const translations = {
     generation: 'Generation',
     generationHelp: 'Enter generation number, e.g. 24th, 25th, 26th',
     placeholderGeneration: 'e.g. 廿四',
+    
+    // Email Notifications
+    emailNotifications: 'Email Notifications',
+    emailNotificationsHelp: 'Send email notifications to all editors and admins when adding new members or updating death dates',
+    enableEmailNotifications: 'Enable Email Notifications',
+    disableEmailNotifications: 'Disable Email Notifications',
+    emailNotificationsStatus: 'Email Notifications Status',
     
     // Spouse Selection
     selectOtherParent: 'Select Other Parent (Spouse)',

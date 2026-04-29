@@ -323,3 +323,28 @@ export function subscribeHistory(callback) {
     console.warn('History subscription error:', err.message);
   });
 }
+
+// ── Settings helpers ──────────────────────────────────────────────────────────
+
+/**
+ * Initialize email notifications settings if they don't exist.
+ * @returns {Promise<void>}
+ */
+export async function initializeEmailNotificationsSettings() {
+  try {
+    const settingsRef = doc(db, 'settings', 'emailNotifications');
+    const settingsDoc = await getDoc(settingsRef);
+    
+    if (!settingsDoc.exists()) {
+      // Initialize with default settings (disabled by default)
+      await setDoc(settingsRef, {
+        enabled: false,
+        createdAt: new Date().toISOString(),
+        lastUpdated: new Date().toISOString()
+      });
+      console.log('✅ Email notifications settings initialized');
+    }
+  } catch (error) {
+    console.warn('Failed to initialize email notifications settings:', error);
+  }
+}

@@ -1,6 +1,7 @@
 import * as db from './db.js';
 import { getCurrentUser } from './auth.js';
 import { recordEditActivity } from './editSession.js';
+import { sendNewMemberEmail, sendDeathDateUpdateEmail } from './emailNotifications.js';
 import { 
   initImageUploadUI, 
   getSelectedImageFile, 
@@ -253,6 +254,12 @@ export function openEditForm(member) {
   document.getElementById('f-hometown').value  = member.hometown || '';
   document.getElementById('f-nationality').value = member.nationality || '';
   document.getElementById('f-notes').value     = member.notes    || '';
+  
+  // Store the previous death date for comparison during save
+  const deathField = document.getElementById('f-death');
+  if (deathField) {
+    deathField.dataset.previousValue = member.death || '';
+  }
   
   // Set Lee family member checkbox
   document.getElementById('f-lee-family-member').checked = member.isLeeFamilyMember !== false; // Default to true if not set
@@ -530,6 +537,21 @@ export function initEditForm(onSaved) {
       
       // Clear the spouseOf data attribute
       delete form.dataset.spouseOf;
+      
+      // Send email notifications if this is a new member or death date update
+      if (!id) {
+        // New member added
+        await sendNewMemberEmail(member, actorName);
+      } else if (member.death) {
+        // Check if death date was newly added (not just updated)
+        const deathField = document.getElementById('f-death');
+        const previousDeathDate = deathField?.dataset.previousValue || '';
+        
+        if (!previousDeathDate && member.death) {
+          // Death date was newly added (was empty before, now has value)
+          await sendDeathDateUpdateEmail(member, actorName, previousDeathDate);
+        }
+      }
       
       closeForm();
       if (onSaved) onSaved();

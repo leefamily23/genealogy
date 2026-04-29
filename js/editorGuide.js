@@ -332,6 +332,39 @@ function loadGuideContent(role) {
           ⚠️ <strong>警告：</strong>重置浏览次数操作无法撤销！
         </div>
         
+        <h4>📧 邮件通知系统</h4>
+        <p>管理员可以启用邮件通知功能，在以下情况下自动发送邮件给所有编辑者和管理员：</p>
+        <ul>
+          <li>✉️ <strong>新成员添加：</strong>当有人添加新的家族成员时</li>
+          <li>✉️ <strong>去世日期更新：</strong>当为成员添加去世日期时</li>
+        </ul>
+        
+        <h4>启用邮件通知：</h4>
+        <ol>
+          <li>打开 <button class="btn-demo">👥 管理用户</button> 面板</li>
+          <li>滚动到底部的"📧 邮件通知"部分</li>
+          <li>勾选 <strong>"启用"</strong> 复选框</li>
+          <li>状态会显示 <span style="color: #27ae60; font-weight: 600;">✅ 已启用</span></li>
+        </ol>
+        
+        <h4>邮件内容：</h4>
+        <p>邮件会包含以下信息：</p>
+        <ul>
+          <li>成员的中文名和英文名</li>
+          <li>成员的出生日期、去世日期（如有）</li>
+          <li>成员的籍贯和国籍</li>
+          <li>成员的照片</li>
+          <li>操作者的名字和操作时间</li>
+        </ul>
+        
+        <div class="guide-tip">
+          💡 <strong>提示：</strong>邮件会发送给所有状态为"active"的编辑者和管理员。建议在重要编辑前启用此功能，以便及时通知团队成员。
+        </div>
+        
+        <div class="guide-warning">
+          ⚠️ <strong>注意：</strong>邮件通知使用 EmailJS 服务，有配额限制。请勿频繁启用/禁用，以免浪费配额。建议在需要时启用，完成编辑后再禁用。
+        </div>
+        
         <h4>📊 管理员最佳实践</h4>
         <ul>
           <li>✅ <strong>定期检查用户列表</strong> - 确保只有授权用户有访问权限</li>
@@ -340,6 +373,7 @@ function loadGuideContent(role) {
           <li>✅ <strong>定期创建备份</strong> - 在重要编辑前后创建备份</li>
           <li>✅ <strong>查看编辑历史</strong> - 了解谁在何时做了什么修改</li>
           <li>✅ <strong>协调编辑时间</strong> - 与编辑者沟通，避免编辑冲突</li>
+          <li>✅ <strong>合理使用邮件通知</strong> - 在需要时启用，避免浪费 EmailJS 配额</li>
         </ul>
         
         <h4>🔐 权限说明</h4>
@@ -384,6 +418,11 @@ function loadGuideContent(role) {
             </tr>
             <tr style="background: #fff8f0;">
               <td style="padding: 8px; border: 1px solid #ddd;"><strong>重置浏览次数</strong></td>
+              <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">❌</td>
+              <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">✅</td>
+            </tr>
+            <tr style="background: #fff8f0;">
+              <td style="padding: 8px; border: 1px solid #ddd;"><strong>启用/禁用邮件通知</strong></td>
               <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">❌</td>
               <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">✅</td>
             </tr>
@@ -443,10 +482,10 @@ function loadGuideContent(role) {
           <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px; background: white; border-radius: 6px; border: 1px solid #dde;">
             <span style="font-size: 1.5rem; flex-shrink: 0;">📧</span>
             <div style="flex: 1; min-width: 0;">
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: nowrap;"><div style="display: flex; align-items: center; gap: 6px;"><strong style="color: #2c1810;">EmailJS</strong><a href="https://www.emailjs.com" target="_blank" style="font-size: 0.75rem; color: #3498db;">emailjs.com</a></div>
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: nowrap;"><div style="display: flex; align-items: center; gap: 6px;"><strong style="color: #2c1810;">EmailJS 邮件通知</strong><a href="https://www.emailjs.com" target="_blank" style="font-size: 0.75rem; color: #3498db;">emailjs.com</a></div>
                 ${isAdmin ? `<a href="https://dashboard.emailjs.com/admin/templates" target="_blank" style="font-size: 0.75rem; background: #2196f3; color: white; padding: 2px 8px; border-radius: 4px; text-decoration: none; flex-shrink: 0;">📧 Dashboard</a>` : ''}
               </div>
-              <p style="margin: 4px 0 0; font-size: 0.85rem; color: #555;">邮件发送服务。当管理员邀请新编辑者时，系统会通过 EmailJS 自动发送邀请邮件至对方的 Gmail 地址，通知他们已获得访问权限。</p>
+              <p style="margin: 4px 0 0; font-size: 0.85rem; color: #555;">邮件发送服务。当启用邮件通知时，系统会在以下情况自动发送邮件给所有编辑者和管理员：(1) 添加新成员时，(2) 为成员添加去世日期时。邮件包含成员信息、照片和操作者名字。管理员可在用户管理面板中启用/禁用此功能。</p>
             </div>
           </div>
 
