@@ -27,19 +27,44 @@ function updateEditSessionManagementVisibility() {
  */
 async function loadEmailNotificationsStatus() {
   const container = document.getElementById('email-notifications-section');
-  if (!container) return;
+  if (!container) {
+    console.warn('Email notifications section not found');
+    return;
+  }
   
   try {
+    console.log('📧 Loading email notifications status...');
     const enabled = await isEmailNotificationsEnabled();
+    console.log('📧 Current status:', enabled);
+    
     const toggle = container.querySelector('#email-notifications-toggle');
     
     if (toggle) {
-      toggle.checked = enabled;
-      toggle.addEventListener('change', async (e) => {
+      // Remove any existing listeners by cloning the element
+      const newToggle = toggle.cloneNode(true);
+      toggle.parentNode.replaceChild(newToggle, toggle);
+      
+      // Add fresh event listener
+      newToggle.addEventListener('change', async (e) => {
+        console.log('📧 Toggle changed to:', e.target.checked);
         const actor = getCurrentUser();
-        await toggleEmailNotifications(e.target.checked, actor?.uid || '', actor?.displayName || actor?.email || 'Unknown');
-        updateEmailNotificationsUI(e.target.checked);
+        console.log('📧 Current user:', actor?.displayName || actor?.email);
+        const success = await toggleEmailNotifications(e.target.checked, actor?.uid || '', actor?.displayName || actor?.email || 'Unknown');
+        if (success) {
+          console.log('📧 Toggle saved successfully');
+          updateEmailNotificationsUI(e.target.checked);
+        } else {
+          console.warn('📧 Toggle save failed, reverting');
+          // Revert toggle if save failed
+          e.target.checked = !e.target.checked;
+        }
       });
+      
+      // Set initial state
+      newToggle.checked = enabled;
+      console.log('📧 Toggle initialized with state:', enabled);
+    } else {
+      console.warn('Email notifications toggle not found');
     }
     
     updateEmailNotificationsUI(enabled);

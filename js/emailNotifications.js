@@ -164,10 +164,11 @@ export async function toggleEmailNotifications(enabled, adminUid, adminName) {
       updatedByName: adminName
     });
     
-    console.log(`✅ Email notifications ${enabled ? 'enabled' : 'disabled'}`);
+    console.log(`✅ Email notifications ${enabled ? 'enabled' : 'disabled'} by ${adminName}`);
     return true;
   } catch (error) {
     console.error('Error toggling email notifications:', error);
+    alert(`❌ 邮件通知设置失败: ${error.message}`);
     return false;
   }
 }
