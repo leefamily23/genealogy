@@ -63,6 +63,11 @@ export const translations = {
     leeFamilyMember: '李家家族成员',
     leeFamilyMemberHelp: '✓ 勾选此框表示此人是李家家族成员（将出现在族谱标签中）\n✗ 不勾选表示配偶/姻亲等不同姓氏（仅出现在家族树标签中）',
     
+    // Generation
+    generation: '世祖',
+    generationHelp: '输入代数，例如：廿四、廿五、廿六',
+    placeholderGeneration: '例如：廿四',
+    
     // Spouse Selection
     selectOtherParent: '选择另一方父母（配偶）',
     selectSpouse: '-- 选择配偶 --',
@@ -182,6 +187,11 @@ export const translations = {
     // Lee Family Member
     leeFamilyMember: 'Lee Family Member',
     leeFamilyMemberHelp: '✓ Check this box if this person is a Lee family member (will appear in Genealogy tab)\n✗ Uncheck for spouses/in-laws with different surnames (will only appear in Family Tree tab)',
+    
+    // Generation
+    generation: 'Generation',
+    generationHelp: 'Enter generation number, e.g. 24th, 25th, 26th',
+    placeholderGeneration: 'e.g. 廿四',
     
     // Spouse Selection
     selectOtherParent: 'Select Other Parent (Spouse)',

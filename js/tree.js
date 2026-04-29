@@ -472,7 +472,7 @@ export function renderTree(members, role) {
     }
   });
 
-  // Render STRAIGHT marriage links with solid red line
+  // Render STRAIGHT marriage links with dotted red line
   group.selectAll('.marriage-link')
     .data(marriageLinks)
     .join('line')
@@ -482,7 +482,8 @@ export function renderTree(members, role) {
     .attr('x2', d => d.target.x)
     .attr('y2', d => d.target.y)
     .attr('stroke', '#e74c3c')
-    .attr('stroke-width', 3);
+    .attr('stroke-width', 3)
+    .attr('stroke-dasharray', '8,4'); // Dotted line: 8px dash, 4px gap
 
   // Render spouse nodes (same design as main nodes)
   const spouseNodes = group.selectAll('.spouse-node')
@@ -653,6 +654,7 @@ export function renderDetailPanel(member, role, allMembers = []) {
   // Always use Chinese labels
   const labels = {
     gender: '性别',
+    generation: '世祖',
     male: '♂ 男',
     female: '♀ 女',
     unknown: '—',
@@ -762,6 +764,7 @@ export function renderDetailPanel(member, role, allMembers = []) {
     </div>
     <table>
       <tr><td>${labels.gender}</td><td>${gender}</td></tr>
+      ${member.generation ? `<tr><td>${labels.generation}</td><td>${member.generation}</td></tr>` : ''}
       <tr><td>${labels.born}</td><td>${birth}</td></tr>
       ${member.death ? `<tr><td>${labels.died}</td><td>${member.death}</td></tr>` : ''}
       ${parentInfo}

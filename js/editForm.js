@@ -247,6 +247,7 @@ export function openEditForm(member) {
   document.getElementById('f-name').value      = member.name     || '';
   document.getElementById('f-chinese').value   = member.chinese  || '';
   document.getElementById('f-gender').value    = member.gender   || 'male';
+  document.getElementById('f-generation').value = member.generation || '';
   document.getElementById('f-birth').value     = member.birth    || '';
   document.getElementById('f-death').value     = member.death    || '';
   document.getElementById('f-hometown').value  = member.hometown || '';
@@ -374,6 +375,7 @@ export function initEditForm(onSaved) {
       name:     name.trim(),
       chinese:  document.getElementById('f-chinese').value.trim(),
       gender:   document.getElementById('f-gender').value,
+      generation: document.getElementById('f-generation').value.trim(),
       birth:    document.getElementById('f-birth').value.trim(),
       death:    document.getElementById('f-death').value.trim(),
       notes:    document.getElementById('f-notes').value.trim(),

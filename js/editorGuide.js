@@ -145,13 +145,13 @@ function loadGuideContent(role) {
         <h4>恢复备份：</h4>
         <ol>
           <li>打开备份面板</li>
-          <li>在"快照备份"中找到要恢复的备份</li>
+          <li>在"备份"中找到要恢复的备份</li>
           <li>点击 <button class="btn-demo btn-success">恢复</button> 按钮</li>
           <li>确认恢复操作</li>
           <li>页面会自动刷新并恢复到备份时的状态</li>
         </ol>
 
-        <h4>📋 快照信息：</h4>
+        <h4>📋 备份信息：</h4>
         <ul>
           <li>系统保留最近 <strong>15 个备份</strong></li>
           <li>每个备份显示：创建时间、成员数量、创建者</li>
@@ -252,10 +252,10 @@ function loadGuideContent(role) {
         <p>A: 在添加或编辑成员时，点击"选择照片"按钮，选择图片文件即可。</p>
 
         <h4>Q: 删除成员后可以恢复吗？</h4>
-        <p>A: 删除操作无法直接撤销，但可以通过恢复之前的快照来恢复数据。建议在重要操作前创建快照。</p>
+        <p>A: 删除操作无法直接撤销，但可以通过恢复之前的备份来恢复数据。建议在重要操作前创建备份。</p>
 
-        <h4>Q: 快照会占用很多空间吗？</h4>
-        <p>A: 系统只保留最近 15 个快照，旧快照会自动删除，不会占用过多空间。</p>
+        <h4>Q: 备份会占用很多空间吗？</h4>
+        <p>A: 系统只保留最近 15 个备份，旧备份会自动删除，不会占用过多空间。</p>
 
         <h4>Q: 手机上可以编辑吗？</h4>
         <p>A: 可以！系统支持手机浏览器，所有功能都可以在手机上使用。</p>
@@ -266,7 +266,7 @@ function loadGuideContent(role) {
       <h3>💡 10. 最佳实践建议</h3>
       <div class="guide-content">
         <ul>
-          <li>✅ <strong>编辑前创建快照</strong> - 重要编辑前先备份</li>
+          <li>✅ <strong>编辑前创建备份</strong> - 重要编辑前先备份</li>
           <li>✅ <strong>及时退出编辑模式</strong> - 完成后点击"完成编辑"</li>
           <li>✅ <strong>填写完整信息</strong> - 尽量填写详细的成员信息</li>
           <li>✅ <strong>使用高质量照片</strong> - 上传清晰的成员照片</li>
@@ -305,12 +305,12 @@ function loadGuideContent(role) {
           ⚠️ <strong>注意：</strong>移除用户后，该用户将无法再访问家族树。请谨慎操作！
         </div>
         
-        <h4>🚨 强制终止编辑会话</h4>
+        <h4>🚨 强制终止编辑Session</h4>
         <p>如果编辑者忘记退出编辑模式，导致其他人无法编辑：</p>
         <ol>
           <li>打开 <button class="btn-demo">👥 管理用户</button> 面板</li>
           <li>滚动到底部的"编辑管理"部分</li>
-          <li>点击 <button class="btn-demo" style="background: #8e44ad; color: white;">🚨 终止编辑会话</button></li>
+          <li>点击 <button class="btn-demo" style="background: #8e44ad; color: white;">🚨 强制终止</button></li>
           <li>确认操作后，当前编辑会话将被强制终止</li>
           <li>其他编辑者即可立即进入编辑模式</li>
         </ol>
@@ -337,7 +337,7 @@ function loadGuideContent(role) {
           <li>✅ <strong>定期检查用户列表</strong> - 确保只有授权用户有访问权限</li>
           <li>✅ <strong>谨慎提升管理员</strong> - 管理员拥有所有权限，包括删除用户</li>
           <li>✅ <strong>监控编辑会话</strong> - 如有编辑者长时间占用，及时沟通或终止</li>
-          <li>✅ <strong>定期创建快照</strong> - 在重要编辑前后创建备份</li>
+          <li>✅ <strong>定期创建备份</strong> - 在重要编辑前后创建备份</li>
           <li>✅ <strong>查看编辑历史</strong> - 了解谁在何时做了什么修改</li>
           <li>✅ <strong>协调编辑时间</strong> - 与编辑者沟通，避免编辑冲突</li>
         </ul>
@@ -363,7 +363,7 @@ function loadGuideContent(role) {
               <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">✅</td>
             </tr>
             <tr>
-              <td style="padding: 8px; border: 1px solid #ddd;">创建/恢复快照</td>
+              <td style="padding: 8px; border: 1px solid #ddd;">创建/恢复备份</td>
               <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">✅</td>
               <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">✅</td>
             </tr>
@@ -378,7 +378,7 @@ function loadGuideContent(role) {
               <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">✅</td>
             </tr>
             <tr style="background: #fff8f0;">
-              <td style="padding: 8px; border: 1px solid #ddd;"><strong>强制终止编辑会话</strong></td>
+              <td style="padding: 8px; border: 1px solid #ddd;"><strong>强制终止编辑Session</strong></td>
               <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">❌</td>
               <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">✅</td>
             </tr>
@@ -406,7 +406,7 @@ function loadGuideContent(role) {
               <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: nowrap;"><div style="display: flex; align-items: center; gap: 6px;"><strong style="color: #2c1810;">Firebase Firestore</strong><a href="https://firebase.google.com/docs/firestore" target="_blank" style="font-size: 0.75rem; color: #3498db;">firebase.google.com</a></div>
                 ${isAdmin ? `<a href="https://console.firebase.google.com/u/4/project/leefamilygenealogy/firestore/databases/-default-/data/~2F" target="_blank" style="font-size: 0.75rem; background: #f57c00; color: white; padding: 2px 8px; border-radius: 4px; text-decoration: none; flex-shrink: 0;">🔥 Console</a>` : ''}
               </div>
-              <p style="margin: 4px 0 0; font-size: 0.85rem; color: #555;">云端数据库，存储所有家族成员资料、用户账号、编辑历史记录及快照备份。所有数据实时同步，任何设备打开网页都能看到最新内容。</p>
+              <p style="margin: 4px 0 0; font-size: 0.85rem; color: #555;">云端数据库，存储所有家族成员资料、用户账号、编辑历史记录及备份。所有数据实时同步，任何设备打开网页都能看到最新内容。</p>
             </div>
           </div>
 
@@ -480,8 +480,8 @@ function loadGuideContent(role) {
           <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px; background: white; border-radius: 6px; border: 1px solid #dde;">
             <span style="font-size: 1.5rem; flex-shrink: 0;">📸</span>
             <div>
-              <strong style="color: #2c1810;">快照备份系统</strong>
-              <p style="margin: 4px 0 0; font-size: 0.85rem; color: #555;">手动创建家族树完整数据备份，存储于 Firestore。系统保留最近 15 个快照，超出时自动删除最旧的。可随时一键恢复至任意快照状态，防止误操作导致数据丢失。</p>
+              <strong style="color: #2c1810;">备份系统</strong>
+              <p style="margin: 4px 0 0; font-size: 0.85rem; color: #555;">手动创建家族树完整数据备份，存储于 Firestore。系统保留最近 15 个备份，超出时自动删除最旧的。可随时一键恢复至任意备份状态，防止误操作导致数据丢失。</p>
             </div>
           </div>
 

@@ -62,7 +62,7 @@ async function createSnapshot(description = '') {
       createdBy: user?.displayName || user?.email || 'Unknown',
       createdByUid: user?.uid || '',
       type: 'manual',
-      description: description || '手动快照',
+      description: description || '手动备份',
       memberCount: members.length,
       data: {
         version: '2.0',
@@ -75,11 +75,11 @@ async function createSnapshot(description = '') {
     // Clean up old snapshots (keep only 15 most recent)
     await cleanupOldSnapshots();
     
-    alert(`✅ 快照已创建 (${members.length} 位成员)`);
+    alert(`✅ 备份已创建 (${members.length} 位成员)`);
     await loadSnapshotList();
   } catch (err) {
     console.error('Create snapshot failed:', err);
-    alert(`❌ 创建快照失败: ${err.message}`);
+    alert(`❌ 创建备份失败: ${err.message}`);
   }
 }
 
@@ -101,7 +101,7 @@ async function loadSnapshotList() {
     const querySnapshot = await getDocs(q);
     
     if (querySnapshot.empty) {
-      container.innerHTML = '<p style="color: #666; text-align: center;">暂无快照</p>';
+      container.innerHTML = '<p style="color: #666; text-align: center;">暂无备份</p>';
       return;
     }
 
@@ -134,7 +134,7 @@ async function loadSnapshotList() {
       row.innerHTML = `
         <div style="flex: 1;">
           <div style="font-weight: 500; color: #2c1810;">
-            ${snapshot.type === 'manual' ? '📸' : '🔄'} ${snapshot.description || '快照'}
+            ${snapshot.type === 'manual' ? '📸' : '🔄'} ${snapshot.description || '备份'}
           </div>
           <div style="font-size: 0.8rem; color: #666;">
             ${dateStr} • ${snapshot.memberCount} 位成员 • ${snapshot.createdBy}
@@ -156,7 +156,7 @@ async function loadSnapshotList() {
 
   } catch (err) {
     console.error('Load snapshots failed:', err);
-    container.innerHTML = '<p style="color: red; text-align: center;">加载快照失败</p>';
+    container.innerHTML = '<p style="color: red; text-align: center;">加载备份失败</p>';
   }
 }
 
@@ -165,7 +165,7 @@ async function loadSnapshotList() {
  */
 async function restoreSnapshot(snapshotId) {
   const confirmed = confirm(
-    '⚠️ 警告：恢复快照会覆盖所有现有数据！\n\n确定要继续吗？'
+    '⚠️ 警告：恢复备份会覆盖所有现有数据！\n\n确定要继续吗？'
   );
   if (!confirmed) return;
 
@@ -173,14 +173,14 @@ async function restoreSnapshot(snapshotId) {
     // Get snapshot data
     const snapshotDoc = await getDoc(doc(db, 'snapshots', snapshotId));
     if (!snapshotDoc.exists()) {
-      throw new Error('快照不存在');
+      throw new Error('备份不存在');
     }
 
     const snapshot = snapshotDoc.data();
     const members = snapshot.data.members;
 
     if (!members || !Array.isArray(members)) {
-      throw new Error('快照数据格式无效');
+      throw new Error('备份数据格式无效');
     }
 
     // Restore data using batch write
@@ -200,7 +200,7 @@ async function restoreSnapshot(snapshotId) {
 
     await batch.commit();
 
-    alert(`✅ 快照已恢复 (${members.length} 位成员)\n\n页面将自动刷新。`);
+    alert(`✅ 备份已恢复 (${members.length} 位成员)\n\n页面将自动刷新。`);
     closeBackupModal();
     window.location.reload();
   } catch (err) {
