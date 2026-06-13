@@ -109,8 +109,42 @@ let _role    = null;
 let _currentTab = 'family-tree'; // default to 家族树 (全部)
 let _currentLanguage = 'zh'; // 'zh' or 'en'
 
+function initMobileMenu() {
+  const menuButton = document.getElementById('btn-mobile-menu');
+  const backdrop = document.getElementById('mobile-menu-backdrop');
+  const actions = document.getElementById('app-actions');
+  if (!menuButton || !backdrop || !actions) return;
+
+  const setMenuOpen = (isOpen) => {
+    document.body.classList.toggle('mobile-menu-open', isOpen);
+    menuButton.setAttribute('aria-expanded', String(isOpen));
+  };
+
+  menuButton.addEventListener('click', () => {
+    setMenuOpen(!document.body.classList.contains('mobile-menu-open'));
+  });
+
+  backdrop.addEventListener('click', () => setMenuOpen(false));
+
+  actions.addEventListener('click', (event) => {
+    const target = event.target;
+    if (target instanceof HTMLElement && target.closest('button') && window.innerWidth < 860) {
+      setMenuOpen(false);
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') setMenuOpen(false);
+  });
+
+  window.addEventListener('resize', () => {
+    if (window.innerWidth >= 860) setMenuOpen(false);
+  });
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
+  initMobileMenu();
 
   // Handle redirect result (for iOS sign-in)
   await handleRedirectResult();

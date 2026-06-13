@@ -83,5 +83,11 @@ service cloud.firestore {
         isAdmin()
       );
     }
+
+    // settings: admin can read/write, editor/admin can read
+    match /settings/{settingId} {
+      allow read: if isEditorOrAdmin();
+      allow write: if isAdmin();
+    }
   }
 }

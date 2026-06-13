@@ -7,6 +7,7 @@
 
 import { db } from './firebase-config.js';
 import { collection, query, where, getDocs, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { generateNewMemberEmailHTML, generateDeathDateEmailHTML } from './emailTemplates.js';
 
 /**
  * Check if email notifications are enabled
@@ -75,9 +76,8 @@ export async function sendNewMemberEmail(member, editorName) {
       return;
     }
     
-    // Prepare email data
-    const emailData = {
-      to_emails: recipients.map(r => r.email).join(','),
+    // Generate HTML from local template
+    const htmlContent = generateNewMemberEmailHTML({
       member_name: member.name,
       member_chinese: member.chinese || '—',
       member_gender: member.gender === 'male' ? '♂ 男' : member.gender === 'female' ? '♀ 女' : '—',
@@ -87,12 +87,21 @@ export async function sendNewMemberEmail(member, editorName) {
       member_nationality: member.nationality || '—',
       member_photo: member.imageURL || '',
       editor_name: editorName,
-      timestamp: new Date().toLocaleString('zh-CN'),
-      action_type: 'new_member'
-    };
+      timestamp: new Date().toLocaleString('zh-CN')
+    });
     
-    // Send email using EmailJS
-    await emailjs.send('service_lee_genealogy', 'template_new_member', emailData);
+    // Send email using EmailJS with HTML content
+    const emailPromises = recipients.map(recipient => {
+      return emailjs.send('service_lee_genealogy', 'default', {
+        to_email: recipient.email,
+        subject: `🌳 李家有谱 - 新成员已添加: ${member.name}`,
+        html_message: htmlContent
+      }).catch(err => {
+        console.error(`Failed to send email to ${recipient.email}:`, err);
+      });
+    });
+    
+    await Promise.all(emailPromises);
     console.log('✅ New member email sent to', recipients.length, 'recipients');
     
   } catch (error) {
@@ -125,9 +134,8 @@ export async function sendDeathDateUpdateEmail(member, editorName, oldDeathDate)
       return;
     }
     
-    // Prepare email data
-    const emailData = {
-      to_emails: recipients.map(r => r.email).join(','),
+    // Generate HTML from local template
+    const htmlContent = generateDeathDateEmailHTML({
       member_name: member.name,
       member_chinese: member.chinese || '—',
       member_birth: member.birth || '—',
@@ -136,12 +144,21 @@ export async function sendDeathDateUpdateEmail(member, editorName, oldDeathDate)
       member_nationality: member.nationality || '—',
       member_photo: member.imageURL || '',
       editor_name: editorName,
-      timestamp: new Date().toLocaleString('zh-CN'),
-      action_type: 'death_date_update'
-    };
+      timestamp: new Date().toLocaleString('zh-CN')
+    });
     
-    // Send email using EmailJS
-    await emailjs.send('service_lee_genealogy', 'template_death_update', emailData);
+    // Send email using EmailJS with HTML content
+    const emailPromises = recipients.map(recipient => {
+      return emailjs.send('service_lee_genealogy', 'default', {
+        to_email: recipient.email,
+        subject: `🌳 李家有谱 - 讣告: ${member.name}`,
+        html_message: htmlContent
+      }).catch(err => {
+        console.error(`Failed to send email to ${recipient.email}:`, err);
+      });
+    });
+    
+    await Promise.all(emailPromises);
     console.log('✅ Death date update email sent to', recipients.length, 'recipients');
     
   } catch (error) {
