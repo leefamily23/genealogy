@@ -164,16 +164,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Apply initial translations (Chinese by default)
   applyTranslations(_currentLanguage);
 
-  // Initialize build info display (after other initialization)
-  setTimeout(async () => {
-    try {
-      await initBuildInfo();
-      // Increment page views after build info is loaded
-      await incrementPageViews();
-    } catch (error) {
-      console.warn('Build info initialization failed:', error);
-    }
-  }, 100);
+  // Initialize build info display (non-blocking, runs in background)
+  // Don't await this - it should not delay the tree rendering
+  initBuildInfo().catch(error => {
+    console.warn('Build info initialization failed:', error);
+  });
+  
+  // Increment page views (non-blocking)
+  incrementPageViews().catch(error => {
+    console.warn('Page views increment failed:', error);
+  });
 
   // Auth buttons
   document.getElementById('btn-sign-in')
@@ -272,9 +272,27 @@ async function reloadTree() {
   console.log('🔄 Reloading tree data...');
   const startTime = performance.now();
   
+  // Show loading state
+  const treeContainer = document.getElementById('tree-container');
+  const treeGroup = document.getElementById('tree-group');
+  if (treeGroup) treeGroup.innerHTML = '';
+  
   try {
     _members = await getAllMembers();
     console.log(`📊 Loaded ${_members.length} family members`);
+    
+    // Check if we actually got data
+    if (_members.length === 0) {
+      console.warn('⚠️ No family members found in Firestore');
+      if (treeContainer) {
+        treeContainer.innerHTML =
+          '<div style="padding:40px;color:#e67e22;font-size:1rem;text-align:center">' +
+          '<p>📭 <strong>No family members found</strong></p>' +
+          '<p style="font-size:0.9rem;color:#7f8c8d">The genealogy database is empty. Add members to get started!</p>' +
+          '</div>';
+      }
+      return;
+    }
     
     // Safety check for data integrity
     if (_members.length > 0) {
@@ -297,6 +315,15 @@ async function reloadTree() {
     console.log(`✅ Tree reload completed in ${(endTime - startTime).toFixed(2)}ms`);
   } catch (err) {
     console.error('❌ Tree reload failed:', err);
+    // Show specific error message
+    if (treeContainer) {
+      treeContainer.innerHTML =
+        `<div style="padding:40px;color:#c0392b;font-size:14px;line-height:1.6;text-align:center">
+          <p><strong>⚠️ Failed to load family data</strong></p>
+          <p style="color:#7f8c8d;margin-top:10px">${err.message}</p>
+          <p style="font-size:0.85rem;color:#95a5a6;margin-top:15px">Check your internet connection and Firestore permissions</p>
+        </div>`;
+    }
     // Error already shown by db.js
   }
 }
@@ -520,7 +547,16 @@ function wireDetailActions(member) {
 export function showErrorBanner(message) {
   const banner = document.getElementById('error-banner');
   const text   = document.getElementById('error-banner-text');
-  if (!banner || !text) return;
+  if (!banner || !text) {
+    // Fallback: show error directly in console and DOM if banner is missing
+    console.error('Error (banner unavailable):', message);
+    // Add error message to page directly
+    const errorDiv = document.createElement('div');
+    errorDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#c0392b;color:white;padding:20px;z-index:9999;font-size:14px;';
+    errorDiv.textContent = '❌ ' + message;
+    document.body.insertBefore(errorDiv, document.body.firstChild);
+    return;
+  }
   text.textContent = message;
   banner.classList.remove('hidden');
 }
@@ -589,7 +625,7 @@ async function fetchLatestCommitFromGitHub() {
     
     // Add timeout to prevent hanging
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // Reduced to 5 seconds
     
     const response = await fetch(apiUrl, {
       signal: controller.signal,
